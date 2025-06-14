@@ -1,320 +1,410 @@
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter, Sparkles, Heart } from "lucide-react";
+import { useState } from "react";
+import { Search, Heart, Clock, Sparkles, Users, Zap, Plus, Bell, Calendar, Play } from "lucide-react";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { Switch } from "./ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { fallbackNudges } from "@/data/fallbackNudges";
-import LikeButton from "./LikeButton";
+import { useToast } from "./ui/use-toast";
 import InteractiveNudge from "./InteractiveNudge";
 
-interface DiscoverScreenProps {
-  currentMood?: string | null;
-}
+const nudgeCategories = [
+  { id: "mindfulness", name: "Mindfulness", icon: "🧘", color: "bg-mint" },
+  { id: "movement", name: "Movement", icon: "🤸", color: "bg-peach" },
+  { id: "connection", name: "Connection", icon: "💝", color: "bg-powder" },
+  { id: "creativity", name: "Creativity", icon: "🎨", color: "bg-lavender" },
+  { id: "gratitude", name: "Gratitude", icon: "🙏", color: "bg-lemon" },
+];
 
-interface NudgeData {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  interactive_type: string;
-  is_ai_generated?: boolean;
-}
+const featuredNudges = [
+  {
+    id: 1,
+    title: "Take 5 mindful breaths",
+    description: "Center yourself with guided breathing",
+    category: "mindfulness",
+    duration: "2 min",
+    difficulty: "Easy",
+    frequency: "Daily",
+    isAiGenerated: false,
+    type: "breathe"
+  },
+  {
+    id: 2,
+    title: "Dance to one song",
+    description: "Move your body and lift your spirits",
+    category: "movement",
+    duration: "3 min",
+    difficulty: "Easy",
+    frequency: "3x/week",
+    isAiGenerated: false,
+    type: "timer"
+  },
+  {
+    id: 3,
+    title: "Text someone you appreciate",
+    description: "Spread joy with a kind message",
+    category: "connection",
+    duration: "1 min",
+    difficulty: "Easy",
+    frequency: "Weekly",
+    isAiGenerated: false,
+    type: "reflective"
+  },
+];
 
-const categories = ["All", "Mindfulness", "Gratitude", "Movement", "Connection", "Self-Care", "Reflection", "Creativity"];
-
-export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
-  const [nudges, setNudges] = useState<NudgeData[]>([]);
-  const [filteredNudges, setFilteredNudges] = useState<NudgeData[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedNudge, setSelectedNudge] = useState<NudgeData | null>(null);
-  const [showInteractive, setShowInteractive] = useState(false);
-  const { user } = useAuth();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showAiNudges, setShowAiNudges] = useState(false);
+  const [selectedNudge, setSelectedNudge] = useState<any>(null);
+  const [tryingNudge, setTryingNudge] = useState<any>(null);
+  const [generatingAi, setGeneratingAi] = useState(false);
+  const [aiGeneratedNudges, setAiGeneratedNudges] = useState<any[]>([]);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    loadNudges();
-  }, [user]);
-
-  useEffect(() => {
-    filterNudges();
-  }, [nudges, selectedCategory, searchQuery]);
-
-  const loadNudges = async () => {
+  const generateAiNudges = async () => {
+    setGeneratingAi(true);
     try {
-      const { data: dbNudges, error } = await supabase
-        .from('nudges')
-        .select('*')
-        .order('created_at', { ascending: false });
+      console.log('Calling generate-nudge function...');
+      
+      const { data, error } = await supabase.functions.invoke('generate-nudge', {
+        body: {
+          context: selectedCategory || 'general wellbeing',
+          requested_category: selectedCategory || undefined,
+          current_mood: 'curious'
+        }
+      });
 
-      if (error) throw error;
+      console.log('Generate nudge response:', { data, error });
 
-      // Combine database nudges with fallback nudges
-      const combinedNudges = [
-        ...(dbNudges || []),
-        ...fallbackNudges.map((nudge, index) => ({
-          id: `fallback-${index}`,
-          ...nudge
-        }))
-      ];
+      if (error) {
+        console.error('Error generating nudge:', error);
+        toast({
+          title: "Generation Error",
+          description: "Could not generate new nudge ideas. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-      setNudges(combinedNudges);
+      if (data?.success && data?.nudge) {
+        const newNudge = {
+          id: data.nudge.id,
+          title: data.nudge.title,
+          description: data.nudge.description,
+          category: data.nudge.category,
+          duration: "3-5 min",
+          difficulty: "Easy",
+          frequency: "As needed",
+          isAiGenerated: true,
+          interactive_type: data.nudge.interactive_type,
+          type: data.nudge.interactive_type?.toLowerCase() || "reflective"
+        };
+        
+        setAiGeneratedNudges(prev => [newNudge, ...prev]);
+        
+        toast({
+          title: "New Nudge Generated!",
+          description: data.message || "A fresh, unique nudge has been created just for you!",
+        });
+      } else {
+        throw new Error('No nudge data received');
+      }
     } catch (error) {
-      console.error('Error loading nudges:', error);
-      // Use fallback nudges only
-      const fallbackData = fallbackNudges.map((nudge, index) => ({
-        id: `fallback-${index}`,
-        ...nudge
-      }));
-      setNudges(fallbackData);
+      console.error('Error generating AI nudges:', error);
+      toast({
+        title: "Generation Error",
+        description: "Could not generate new nudge ideas. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingAi(false);
     }
   };
 
-  const filterNudges = () => {
-    let filtered = nudges;
-
-    if (selectedCategory !== "All") {
-      filtered = filtered.filter(nudge => nudge.category === selectedCategory);
-    }
-
-    if (searchQuery) {
-      filtered = filtered.filter(nudge =>
-        nudge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        nudge.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    setFilteredNudges(filtered);
-  };
-
-  const handleTryNow = (nudge: NudgeData) => {
-    setSelectedNudge(nudge);
-    setShowInteractive(true);
+  const handleTryNow = (nudge: any) => {
+    // Convert nudge to interactive format
+    const interactiveNudge = {
+      id: nudge.id,
+      nudge: nudge.title,
+      description: nudge.description,
+      affirmation: "Wonderful! Thank you for trying this nudge.",
+      type: nudge.type || nudge.interactive_type?.toLowerCase() || "reflective",
+      duration: nudge.type === "timer" ? 180 : undefined, // 3 minutes default
+      items: nudge.type === "observational" ? ["Something peaceful", "Something colorful", "Something meaningful"] : undefined
+    };
+    
+    setTryingNudge(interactiveNudge);
   };
 
   const handleNudgeComplete = () => {
-    setShowInteractive(false);
-    setSelectedNudge(null);
+    setTryingNudge(null);
+    toast({
+      title: "Nudge Complete! 🌟",
+      description: "Great job! You've added a moment of joy to your day.",
+    });
   };
 
-  if (showInteractive && selectedNudge) {
+  const allNudges = [...featuredNudges, ...aiGeneratedNudges];
+  const filteredNudges = allNudges
+    .filter(nudge => !selectedCategory || nudge.category === selectedCategory)
+    .filter(nudge => !searchQuery || nudge.title.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const NudgeDetailModal = ({ nudge, onClose }: { nudge: any, onClose: () => void }) => {
+    const [notifications, setNotifications] = useState(true);
+    const [scheduledTime, setScheduledTime] = useState("09:00");
+    const [moodMatcher, setMoodMatcher] = useState(false);
+
     return (
-      <div className="min-h-screen bg-gradient-to-br from-joy-white to-joy-light-blue/10 p-4">
-        <InteractiveNudge
-          nudge={{
-            id: parseInt(selectedNudge.id.replace(/\D/g, '') || '0'),
-            nudge: selectedNudge.title,
-            description: selectedNudge.description,
-            affirmation: "You're doing amazing!",
-            type: selectedNudge.interactive_type?.toLowerCase() || 'reflective',
-            interactive_type: selectedNudge.interactive_type,
-            title: selectedNudge.title,
-            category: selectedNudge.category
-          }}
-          onComplete={handleNudgeComplete}
-        />
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="joy-card p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-xl font-nunito font-bold text-joy-dark-blue">{nudge.title}</h3>
+            <button onClick={onClose} className="text-joy-steel-blue hover:text-joy-dark-blue">
+              ✕
+            </button>
+          </div>
+          
+          {nudge.isAiGenerated && (
+            <div className="flex items-center gap-2 mb-3 bg-joy-coral/10 p-2 rounded-lg">
+              <Zap className="text-joy-coral" size={16} />
+              <span className="text-sm font-lato text-joy-coral">AI Generated</span>
+            </div>
+          )}
+          
+          <p className="text-joy-steel-blue font-lato mb-4">{nudge.description}</p>
+          
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            <div className="text-center">
+              <Clock className="mx-auto mb-1 text-joy-steel-blue" size={16} />
+              <div className="text-xs text-joy-steel-blue">{nudge.duration}</div>
+            </div>
+            <div className="text-center">
+              <Sparkles className="mx-auto mb-1 text-joy-steel-blue" size={16} />
+              <div className="text-xs text-joy-steel-blue">{nudge.difficulty}</div>
+            </div>
+            <div className="text-center">
+              <Calendar className="mx-auto mb-1 text-joy-steel-blue" size={16} />
+              <div className="text-xs text-joy-steel-blue">{nudge.frequency}</div>
+            </div>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="font-lato font-medium text-joy-dark-blue">Notifications</div>
+                <div className="text-sm text-joy-steel-blue">Get reminded to do this nudge</div>
+              </div>
+              <Switch checked={notifications} onCheckedChange={setNotifications} />
+            </div>
+
+            {notifications && (
+              <div>
+                <label className="block font-lato font-medium text-joy-dark-blue mb-2">
+                  Reminder Time
+                </label>
+                <input
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  className="w-full p-2 border border-joy-light-blue rounded-lg"
+                />
+              </div>
+            )}
+
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="font-lato font-medium text-joy-dark-blue">Mood Matcher</div>
+                <div className="text-sm text-joy-steel-blue">AI suggests based on your mood</div>
+              </div>
+              <Switch checked={moodMatcher} onCheckedChange={setMoodMatcher} />
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => handleTryNow(nudge)} 
+              className="joy-button-primary flex-1"
+            >
+              <Play size={16} className="mr-2" />
+              Try Now
+            </Button>
+            <Button 
+              onClick={() => toast({ title: "Feature Coming Soon!", description: "Nudge collections will be available soon!" })} 
+              className="joy-button-secondary flex-1"
+            >
+              <Plus size={16} className="mr-2" />
+              Add to Collection
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // If trying a nudge, show the interactive experience
+  if (tryingNudge) {
+    return (
+      <div className="min-h-screen bg-joy-white pb-20 px-4">
+        <div className="max-w-md mx-auto pt-12">
+          <div className="mb-4">
+            <button
+              onClick={() => setTryingNudge(null)}
+              className="text-joy-steel-blue hover:text-joy-dark-blue font-lato"
+            >
+              ← Back to Discover
+            </button>
+          </div>
+          
+          <div className="joy-card p-6 text-center">
+            <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
+              {tryingNudge.nudge}
+            </h2>
+            <p className="text-joy-steel-blue font-lato mb-6 leading-relaxed">
+              {tryingNudge.description}
+            </p>
+            
+            <InteractiveNudge
+              nudge={tryingNudge}
+              onComplete={handleNudgeComplete}
+            />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-joy-white via-joy-light-blue/5 to-joy-white relative">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-32 right-6 w-20 h-20 bg-joy-light-blue/8 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-60 left-6 w-16 h-16 bg-joy-coral/8 rounded-full blur-xl"></div>
-      </div>
+    <div className="min-h-screen bg-joy-white pb-20 px-4">
+      <div className="max-w-md mx-auto pt-12">
+        <h1 className="text-3xl font-nunito font-bold text-joy-dark-blue mb-8 text-center">
+          Discover Joy
+        </h1>
+        
+        {/* Search Bar */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-joy-steel-blue" size={20} />
+          <Input
+            placeholder="Search for nudges..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 joy-card border-joy-light-blue/30"
+          />
+        </div>
 
-      <div className="relative z-10 p-4 pt-16 pb-24">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-center mb-8"
-          >
-            <motion.div
-              animate={{ 
-                rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ 
-                duration: 3, 
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="text-5xl mb-4"
-            >
-              🔍
-            </motion.div>
-            <h1 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
-              Discover Nudges
-            </h1>
-            <p className="text-joy-steel-blue font-lato text-sm">
-              Find the perfect nudge for your current mood
-            </p>
-          </motion.div>
-
-          {/* Search Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mb-6"
-          >
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-joy-steel-blue" size={18} />
-              <Input
-                placeholder="Search for nudges..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 py-3 rounded-2xl border-joy-light-blue/30 focus:border-joy-coral bg-joy-white/80 backdrop-blur-sm text-joy-dark-blue font-lato h-12 shadow-lg"
-              />
-            </div>
-          </motion.div>
-
-          {/* Category Filters */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-6"
-          >
-            <div className="flex items-center space-x-3 mb-3">
-              <Filter size={16} className="text-joy-steel-blue" />
-              <span className="text-sm font-nunito font-semibold text-joy-dark-blue">Categories</span>
-            </div>
-            <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-              {categories.map((category) => (
-                <motion.div
-                  key={category}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Badge
-                    variant={selectedCategory === category ? "default" : "secondary"}
-                    className={`cursor-pointer whitespace-nowrap transition-all duration-300 font-lato font-medium px-4 py-2 rounded-full ${
-                      selectedCategory === category
-                        ? "bg-joy-steel-blue text-joy-white shadow-lg"
-                        : "bg-joy-white text-joy-dark-blue hover:bg-joy-light-blue/20 border border-joy-light-blue/30"
-                    }`}
-                    onClick={() => setSelectedCategory(category)}
-                  >
-                    {category}
-                  </Badge>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* AI-Powered Section Header */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="mb-4"
-          >
-            <div className="bg-gradient-to-r from-joy-coral/10 to-joy-steel-blue/10 rounded-2xl p-4 border border-joy-light-blue/20">
-              <div className="flex items-center space-x-2 mb-1">
-                <motion.div
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                >
-                  <Sparkles className="w-5 h-5 text-joy-coral" />
-                </motion.div>
-                <h3 className="font-nunito font-bold text-joy-dark-blue">AI-Powered Nudge Ideas</h3>
-              </div>
-              <p className="text-xs text-joy-steel-blue font-lato">
-                Personalized suggestions crafted just for you
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Nudges Grid */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="space-y-4"
-          >
-            <AnimatePresence>
-              {filteredNudges.map((nudge, index) => (
-                <motion.div
-                  key={nudge.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: 0.05 * index }}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  className="bg-joy-white/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-joy-light-blue/20 transition-all duration-300"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-nunito font-bold text-joy-dark-blue text-base mb-2 leading-tight">
-                        {nudge.title}
-                      </h3>
-                      <div className="flex items-center space-x-2 mb-3 flex-wrap gap-y-1">
-                        <Badge className="bg-joy-sage/20 text-joy-sage font-lato font-medium text-xs px-3 py-1">
-                          {nudge.category}
-                        </Badge>
-                        <Badge className="bg-joy-light-blue/20 text-joy-dark-blue font-lato font-medium text-xs px-3 py-1">
-                          {nudge.interactive_type}
-                        </Badge>
-                        {nudge.is_ai_generated && (
-                          <Badge className="bg-joy-coral/20 text-joy-coral font-lato font-medium text-xs px-3 py-1 flex items-center">
-                            <Sparkles size={8} className="mr-1" />
-                            AI
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <LikeButton nudgeId={nudge.id} nudgeData={nudge} size="md" />
-                  </div>
-                  
-                  <p className="text-joy-steel-blue font-lato text-sm mb-4 leading-relaxed">
-                    {nudge.description}
-                  </p>
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleTryNow(nudge)}
-                    className="w-full bg-joy-coral text-joy-white py-3 rounded-xl font-nunito font-bold transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
-                  >
-                    <span>Try Now</span>
-                    <motion.span
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      ✨
-                    </motion.span>
-                  </motion.button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {filteredNudges.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-12"
+        {/* Categories */}
+        <div className="mb-6">
+          <h2 className="font-nunito font-semibold text-joy-dark-blue mb-4">Browse Categories</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {nudgeCategories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id === selectedCategory ? null : category.id)}
+                className={`joy-card p-4 text-center transition-all duration-200 ${
+                  selectedCategory === category.id ? 'ring-2 ring-joy-coral' : ''
+                }`}
               >
-                <div className="text-4xl mb-4">🔍</div>
-                <h3 className="font-nunito font-bold text-joy-dark-blue mb-2">No nudges found</h3>
-                <p className="text-joy-steel-blue font-lato text-sm">
-                  Try adjusting your search or filters to discover new nudges.
-                </p>
-              </motion.div>
-            )}
-          </motion.div>
-        </motion.div>
+                <div className="text-2xl mb-2">{category.icon}</div>
+                <div className="font-nunito font-medium text-joy-dark-blue">{category.name}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* AI-Powered Nudge Ideas */}
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-nunito font-semibold text-joy-dark-blue flex items-center gap-2">
+              <Zap className="text-joy-coral" size={20} />
+              AI-Powered Ideas
+            </h2>
+            <Button 
+              onClick={generateAiNudges} 
+              disabled={generatingAi}
+              className="joy-button-secondary text-sm px-3 py-1"
+            >
+              {generatingAi ? 'Generating...' : 'Generate New Ideas'}
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-2 mb-3">
+            <Switch checked={showAiNudges} onCheckedChange={setShowAiNudges} />
+            <span className="font-lato text-joy-steel-blue">Show AI suggestions</span>
+          </div>
+
+          {aiGeneratedNudges.length > 0 && showAiNudges && (
+            <div className="mb-4 p-3 bg-joy-coral/5 rounded-lg border border-joy-coral/20">
+              <div className="text-sm text-joy-coral font-lato">
+                ✨ {aiGeneratedNudges.length} AI-generated nudge{aiGeneratedNudges.length > 1 ? 's' : ''} available
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Featured Nudges */}
+        <div>
+          <h2 className="font-nunito font-semibold text-joy-dark-blue mb-4">
+            {showAiNudges ? 'All Nudges' : 'Featured Nudges'}
+          </h2>
+          <div className="space-y-3">
+            {(showAiNudges ? filteredNudges : filteredNudges.filter(n => !n.isAiGenerated))
+              .map((nudge) => (
+                <div key={nudge.id} className="joy-card p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-nunito font-semibold text-joy-dark-blue">{nudge.title}</h3>
+                      {nudge.isAiGenerated && (
+                        <Zap className="text-joy-coral" size={16} />
+                      )}
+                    </div>
+                    <Heart className="text-joy-steel-blue" size={20} />
+                  </div>
+                  <p className="text-joy-steel-blue font-lato text-sm mb-3">{nudge.description}</p>
+                  <div className="flex justify-between items-center">
+                    <div className="flex gap-2">
+                      <span className="flex items-center gap-1 text-xs text-joy-steel-blue">
+                        <Clock size={14} />
+                        {nudge.duration}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-joy-steel-blue">
+                        <Sparkles size={14} />
+                        {nudge.difficulty}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleTryNow(nudge)}
+                        className="joy-button-primary px-3 py-1 text-sm"
+                      >
+                        Try Now
+                      </button>
+                      <button 
+                        onClick={() => setSelectedNudge(nudge)}
+                        className="joy-button-secondary px-3 py-1 text-sm"
+                      >
+                        Details
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+
+          {showAiNudges && filteredNudges.filter(n => n.isAiGenerated).length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-joy-steel-blue font-lato mb-4">
+                No AI-generated nudges yet. Click "Generate New Ideas" to create some!
+              </div>
+            </div>
+          )}
+        </div>
+
+        {selectedNudge && (
+          <NudgeDetailModal 
+            nudge={selectedNudge} 
+            onClose={() => setSelectedNudge(null)} 
+          />
+        )}
       </div>
     </div>
   );

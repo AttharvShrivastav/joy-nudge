@@ -1,5 +1,4 @@
 
-import { motion } from "framer-motion";
 import BreathingNudge from "./nudges/BreathingNudge";
 import TimerNudge from "./nudges/TimerNudge";
 import ObservationalNudge from "./nudges/ObservationalNudge";
@@ -14,8 +13,6 @@ interface NudgeData {
   duration?: number;
   items?: string[];
   interactive_type?: string;
-  title?: string;
-  category?: string;
 }
 
 interface InteractiveNudgeProps {
@@ -29,68 +26,29 @@ export default function InteractiveNudge({ nudge, onComplete }: InteractiveNudge
   
   // Map database interactive_type to component types
   const typeMapping = {
-    'BREATHING': 'breathing',
+    'BREATHING': 'breathe',
     'TIMED': 'timer', 
     'OBSERVATIONAL': 'observational',
     'REFLECTIVE': 'reflective',
-    'NONE': 'simple' // Simple completion for NONE type
+    'NONE': 'reflective' // Default to reflective for simple nudges
   };
 
   const componentType = typeMapping[nudge.interactive_type as keyof typeof typeMapping] || nudgeType;
 
-  // Wrapper with consistent smooth animations
-  const AnimatedWrapper = ({ children }: { children: React.ReactNode }) => (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: -20 }}
-      transition={{ 
-        duration: 0.5, 
-        ease: "easeOut",
-        type: "spring",
-        stiffness: 200
-      }}
-    >
-      {children}
-    </motion.div>
-  );
-
   switch (componentType) {
+    case "breathe":
     case "breathing":
-      return (
-        <AnimatedWrapper>
-          <BreathingNudge nudge={nudge} onComplete={onComplete} />
-        </AnimatedWrapper>
-      );
+      return <BreathingNudge nudge={nudge} onComplete={onComplete} />;
     
     case "timer":
     case "timed":
-      return (
-        <AnimatedWrapper>
-          <TimerNudge nudge={nudge} onComplete={onComplete} />
-        </AnimatedWrapper>
-      );
+      return <TimerNudge nudge={nudge} onComplete={onComplete} />;
     
     case "observational":
-      return (
-        <AnimatedWrapper>
-          <ObservationalNudge nudge={nudge} onComplete={onComplete} />
-        </AnimatedWrapper>
-      );
+      return <ObservationalNudge nudge={nudge} onComplete={onComplete} />;
     
     case "reflective":
-      return (
-        <AnimatedWrapper>
-          <ReflectiveNudge nudge={nudge} onComplete={onComplete} />
-        </AnimatedWrapper>
-      );
-    
-    case "simple":
     default:
-      return (
-        <AnimatedWrapper>
-          <ReflectiveNudge nudge={nudge} onComplete={onComplete} />
-        </AnimatedWrapper>
-      );
+      return <ReflectiveNudge nudge={nudge} onComplete={onComplete} />;
   }
 }

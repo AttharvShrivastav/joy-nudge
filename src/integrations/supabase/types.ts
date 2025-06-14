@@ -39,27 +39,6 @@ export type Database = {
         }
         Relationships: []
       }
-      mood_logs: {
-        Row: {
-          id: string
-          mood_value: string
-          timestamp: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          mood_value: string
-          timestamp?: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          mood_value?: string
-          timestamp?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       nudge_completions: {
         Row: {
           completed_at: string | null
@@ -266,38 +245,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_nudge_likes: {
-        Row: {
-          id: string
-          is_liked: boolean
-          liked_at: string
-          nudge_id: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          is_liked?: boolean
-          liked_at?: string
-          nudge_id: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          is_liked?: boolean
-          liked_at?: string
-          nudge_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_nudge_likes_nudge_id_fkey"
-            columns: ["nudge_id"]
-            isOneToOne: false
-            referencedRelation: "nudges"
             referencedColumns: ["id"]
           },
         ]
