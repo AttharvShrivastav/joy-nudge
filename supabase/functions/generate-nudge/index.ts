@@ -28,97 +28,135 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    console.log('Generating unique reflective nudge for user:', user.id)
+    console.log('Generating personalized nudge for user:', user.id)
 
-    const { context, category = 'mindfulness', mood } = await req.json()
+    const { 
+      requested_category, 
+      requested_interactive_type, 
+      current_mood = 'open', 
+      context 
+    } = await req.json()
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiApiKey) {
       throw new Error('Gemini API key not configured')
     }
 
-    // Generate multiple random elements for maximum uniqueness
+    // Fetch comprehensive user data for personalization
+    console.log('Fetching user profile data...')
+    const { data: userData, error: userDataError } = await supabaseClient
+      .from('users')
+      .select('username, current_streak_days, longest_streak_days, last_streak_update_date')
+      .eq('id', user.id)
+      .single()
+
+    if (userDataError) {
+      console.error('Error fetching user data:', userDataError)
+    }
+
+    // Fetch recent nudge completions for personalization
+    console.log('Fetching recent completions...')
+    const { data: recentCompletions, error: completionsError } = await supabaseClient
+      .from('nudge_completions')
+      .select(`
+        completed_at,
+        mood_at_completion,
+        user_nudges!inner(
+          nudge_id,
+          nudges!inner(category, interactive_type)
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('completed_at', { ascending: false })
+      .limit(10)
+
+    if (completionsError) {
+      console.error('Error fetching completions:', completionsError)
+    }
+
+    // Analyze user patterns
+    const last_completed_categories = recentCompletions
+      ?.map(c => c.user_nudges?.nudges?.category)
+      .filter(Boolean)
+      .slice(0, 5) || []
+
+    const last_completed_interactive_types = recentCompletions
+      ?.map(c => c.user_nudges?.nudges?.interactive_type)
+      .filter(Boolean)
+      .slice(0, 5) || []
+
+    const total_completions = recentCompletions?.length || 0
+    const nudge_completion_frequency = total_completions > 20 ? 'consistent' : 
+                                     total_completions > 5 ? 'developing' : 'new_user'
+
+    // Determine time of day category
+    const hour = new Date().getHours()
+    const time_of_day_category = hour < 6 ? 'late_night' :
+                                hour < 12 ? 'morning' :
+                                hour < 17 ? 'afternoon' :
+                                hour < 21 ? 'evening' : 'night'
+
+    const user_name = userData?.username || user.email?.split('@')[0] || 'friend'
+    const longest_streak_days = userData?.longest_streak_days || 0
+    const current_streak_days = userData?.current_streak_days || 0
+
+    // Generate uniqueness seeds
     const randomSeed = Math.random().toString(36).substring(2, 15)
     const timestamp = new Date().getTime()
     const userSeed = user.id.slice(-8)
     const contextHash = context ? context.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0) : 0
-    const randomNumber = Math.floor(Math.random() * 100000)
 
-    // Reflective writing prompts with high variety
-    const reflectiveThemes = [
-      "gratitude and appreciation",
-      "personal growth moments",
-      "childhood memories that shaped you",
-      "dreams and aspirations",
-      "challenges you've overcome",
-      "people who inspire you",
-      "moments of unexpected joy",
-      "lessons learned from mistakes",
-      "things you're proud of",
-      "hopes for the future",
-      "what makes you feel alive",
-      "unexpected kindness you've received",
-      "your unique strengths",
-      "moments of pure contentment",
-      "what you'd tell your younger self",
-      "simple pleasures that bring joy",
-      "ways you've grown this year",
-      "acts of courage in your life",
-      "connections that matter to you",
-      "times you surprised yourself"
-    ]
+    // Create highly personalized prompt
+    const personalizedPrompt = `You are 'The Alchemist AI' for a mobile app called 'Joy Nudge'. Your purpose is to generate highly personalized, unique, and micro-habit ideas that spark joy and self-discovery.
 
-    const writingStyles = [
-      "free-flowing stream of consciousness",
-      "letter to your future self",
-      "conversation with a wise friend",
-      "list of specific moments",
-      "story from your perspective",
-      "dialogue between your heart and mind",
-      "collection of vivid details",
-      "series of questions and answers",
-      "poem or lyrical expression",
-      "gentle exploration of feelings"
-    ]
+The app's tone is gentle, encouraging, cozy, uplifting, and non-judgmental. Nudges should be micro-habits, quick to perform (1-5 minutes), and focus on positive action and self-reflection.
 
-    const randomTheme = reflectiveThemes[Math.floor(Math.random() * reflectiveThemes.length)]
-    const randomStyle = writingStyles[Math.floor(Math.random() * writingStyles.length)]
+PERSONALIZATION CONTEXT:
+- User: ${user_name} (ID: ${user.id.slice(-8)})
+- Current mood: ${current_mood}
+- Time of day: ${time_of_day_category}
+- Engagement level: ${nudge_completion_frequency} (${total_completions} total completions)
+- Current streak: ${current_streak_days} days (longest: ${longest_streak_days} days)
+- Recent categories: [${last_completed_categories.join(', ')}]
+- Recent interaction types: [${last_completed_interactive_types.join(', ')}]
 
-    const uniquePrompt = `CREATE A COMPLETELY ORIGINAL REFLECTIVE WRITING NUDGE
+${requested_category ? `SPECIFIC REQUEST: User wants a '${requested_category}' category nudge.` : ''}
+${requested_interactive_type ? `INTERACTION PREFERENCE: User prefers '${requested_interactive_type}' type.` : ''}
 
-    CRITICAL REQUIREMENTS:
-    - This MUST be 100% focused on reflective writing/journaling
-    - Create something deeply personal and introspective
-    - NEVER suggest shadow puppets, physical activities, or observational tasks
-    - Focus on inner exploration through written expression
-    - Make it feel like a warm invitation to self-discovery
-    
-    REFLECTIVE WRITING FOCUS:
-    Theme: ${randomTheme}
-    Style: ${randomStyle}
-    Context: ${context || 'personal reflection and growth'}
-    Mood: ${mood || 'curious and open to self-discovery'}
-    
-    UNIQUENESS SEEDS: ${randomSeed}_${timestamp}_${userSeed}_${contextHash}_${randomNumber}
-    
-    RESPONSE FORMAT (strict JSON only):
-    {
-      "title": "Warm, inviting title (max 40 chars) that feels like opening a journal",
-      "description": "Gentle, specific writing prompt (max 160 chars) that invites deep reflection and personal exploration",
-      "category": "self-love",
-      "interactive_type": "REFLECTIVE"
-    }
-    
-    EXAMPLES OF THE REFLECTIVE THINKING NEEDED:
-    - "Write about a moment when you felt truly understood by someone"
-    - "Describe a decision that changed your perspective on life"
-    - "Capture the feeling of a place that always brings you peace"
-    - "Write a letter of forgiveness to yourself for a past mistake"
-    - "Explore what courage means to you through a personal story"
-    
-    Make it feel like a gentle invitation to explore your inner world through writing!`
+PERSONALIZATION RULES:
+- For new users (${nudge_completion_frequency}): Focus on simple, high-success, welcoming nudges
+- For developing users: Introduce gentle variety and slightly deeper reflections
+- For consistent users: Offer more nuanced, creative, and personally challenging nudges
+- Avoid recently used categories: [${last_completed_categories.slice(0, 3).join(', ')}]
+- ${time_of_day_category === 'morning' ? 'Morning energy: Focus on setting intentions, gratitude, gentle awakening' :
+      time_of_day_category === 'afternoon' ? 'Midday reset: Quick energy boosts, mindful breaks, perspective shifts' :
+      time_of_day_category === 'evening' ? 'Evening wind-down: Reflection, gratitude, gentle self-care' :
+      'Night time: Gentle, calming, preparing for rest'}
 
-    console.log('Making request to Gemini API with reflective prompt...')
+INTERACTION TYPE VARIETY:
+${!requested_interactive_type ? `Vary between: 'BREATHING', 'TIMED', 'OBSERVATIONAL', 'REFLECTIVE', 'NONE'` : `Use: '${requested_interactive_type}'`}
+
+UNIQUENESS SEEDS: ${randomSeed}_${timestamp}_${userSeed}_${contextHash}
+
+**CRUCIAL: Generate a completely novel, never-before-suggested idea. Make it feel personally crafted for ${user_name}.**
+
+RESPONSE FORMAT (strict JSON only):
+{
+  "title": "Nudge Title (max 40 characters, warm and inviting)",
+  "description": "Nudge Description (max 160 characters, clear actionable instruction or reflective question)",
+  "category": "Category (Mindfulness, Gratitude, Movement, Connection, Self-Care, Reflection, Creativity)",
+  "interactive_type": "Interaction Type (BREATHING, TIMED, OBSERVATIONAL, REFLECTIVE, or NONE)"
+}
+
+EXAMPLES FOR INSPIRATION (do NOT copy, create something new):
+- REFLECTIVE: "Write about a small act of kindness you witnessed today"
+- OBSERVATIONAL: "Find three things in your space that make you smile and notice why"
+- TIMED: "Spend 2 minutes doing something that brings you immediate joy"
+- BREATHING: "Take 5 deep breaths while thinking of someone you're grateful for"
+
+Create something uniquely meaningful for ${user_name} right now!`
+
+    console.log('Making personalized request to Gemini API...')
 
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
@@ -130,11 +168,11 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: uniquePrompt
+              text: personalizedPrompt
             }]
           }],
           generationConfig: {
-            temperature: 1.0,
+            temperature: 0.9,
             topP: 0.95,
             topK: 64,
             maxOutputTokens: 1024,
@@ -167,57 +205,55 @@ serve(async (req) => {
       }
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', generatedText)
-      // Reflective fallback nudges
-      const reflectiveFallbacks = [
+      
+      // Personalized fallback nudges based on user context
+      const personalizedFallbacks = [
         {
-          title: "Write about unexpected kindness",
-          description: "Describe a moment when someone's kindness surprised you. How did it change your day or perspective?",
-          category: "self-love",
+          title: `${user_name}'s gratitude moment`,
+          description: `Write about one small thing that made you smile today, ${user_name}. What was special about it?`,
+          category: "Gratitude",
           interactive_type: "REFLECTIVE"
         },
         {
-          title: "Letter to your future self",
-          description: "Write a letter to yourself one year from now. What hopes, dreams, and wisdom would you share?",
-          category: "self-love",
-          interactive_type: "REFLECTIVE"
+          title: "Mindful breathing for you",
+          description: `Take 5 deep breaths, ${user_name}. With each exhale, release any tension you're holding.`,
+          category: "Mindfulness", 
+          interactive_type: "BREATHING"
         },
         {
-          title: "Moments of pure contentment",
-          description: "Capture a recent moment when you felt completely at peace. What made it special?",
-          category: "self-love",
-          interactive_type: "REFLECTIVE"
-        },
-        {
-          title: "Your unique strengths story",
-          description: "Write about a time when your unique strengths helped you or someone else overcome a challenge.",
-          category: "self-love",
-          interactive_type: "REFLECTIVE"
-        },
-        {
-          title: "Gratitude for small things",
-          description: "List and explore three tiny moments from this week that brought you joy or comfort.",
-          category: "self-love",
-          interactive_type: "REFLECTIVE"
+          title: "Your personal joy hunt",
+          description: `Look around and find 3 things that bring you comfort right now. Notice why they matter to you.`,
+          category: "Self-Care",
+          interactive_type: "OBSERVATIONAL"
         }
       ]
-      nudgeData = reflectiveFallbacks[Math.floor(Math.random() * reflectiveFallbacks.length)]
+      
+      nudgeData = personalizedFallbacks[Math.floor(Math.random() * personalizedFallbacks.length)]
     }
 
-    // Validate required fields
+    // Validate and clean the generated nudge
     if (!nudgeData.title || !nudgeData.description || !nudgeData.category) {
       throw new Error('Generated nudge missing required fields')
     }
 
-    // Ensure it's always reflective
-    nudgeData.interactive_type = 'REFLECTIVE'
-    nudgeData.category = 'self-love'
+    // Ensure valid interactive_type
+    const validInteractiveTypes = ['BREATHING', 'TIMED', 'OBSERVATIONAL', 'REFLECTIVE', 'NONE']
+    if (!validInteractiveTypes.includes(nudgeData.interactive_type)) {
+      nudgeData.interactive_type = 'REFLECTIVE'
+    }
 
-    // Insert into database with user_id for RLS
+    // Ensure valid category
+    const validCategories = ['Mindfulness', 'Gratitude', 'Movement', 'Connection', 'Self-Care', 'Reflection', 'Creativity']
+    if (!validCategories.includes(nudgeData.category)) {
+      nudgeData.category = 'Self-Care'
+    }
+
+    // Insert into database
     const { data: newNudge, error: insertError } = await supabaseClient
       .from('nudges')
       .insert({
-        title: nudgeData.title,
-        description: nudgeData.description,
+        title: nudgeData.title.substring(0, 100), // Ensure length constraints
+        description: nudgeData.description.substring(0, 500),
         category: nudgeData.category,
         interactive_type: nudgeData.interactive_type,
         is_ai_generated: true,
@@ -231,13 +267,18 @@ serve(async (req) => {
       throw insertError
     }
 
-    console.log('Successfully created unique reflective nudge:', newNudge)
+    console.log('Successfully created personalized nudge:', newNudge)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         nudge: newNudge,
-        message: 'Fresh reflective writing prompt created just for you!'
+        message: `✨ A special nudge created just for ${user_name}!`,
+        personalization_used: {
+          user_engagement: nudge_completion_frequency,
+          time_context: time_of_day_category,
+          streak_level: current_streak_days
+        }
       }),
       { 
         headers: { 

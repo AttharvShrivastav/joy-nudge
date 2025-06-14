@@ -1,11 +1,12 @@
 
 import { useState } from "react";
-import { Search, Heart, Clock, Sparkles, Users, Zap, Plus, Bell, Calendar } from "lucide-react";
+import { Search, Heart, Clock, Sparkles, Users, Zap, Plus, Bell, Calendar, Play } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Switch } from "./ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
+import InteractiveNudge from "./InteractiveNudge";
 
 const nudgeCategories = [
   { id: "mindfulness", name: "Mindfulness", icon: "🧘", color: "bg-mint" },
@@ -24,7 +25,8 @@ const featuredNudges = [
     duration: "2 min",
     difficulty: "Easy",
     frequency: "Daily",
-    isAiGenerated: false
+    isAiGenerated: false,
+    type: "breathe"
   },
   {
     id: 2,
@@ -34,7 +36,8 @@ const featuredNudges = [
     duration: "3 min",
     difficulty: "Easy",
     frequency: "3x/week",
-    isAiGenerated: false
+    isAiGenerated: false,
+    type: "timer"
   },
   {
     id: 3,
@@ -44,7 +47,8 @@ const featuredNudges = [
     duration: "1 min",
     difficulty: "Easy",
     frequency: "Weekly",
-    isAiGenerated: false
+    isAiGenerated: false,
+    type: "reflective"
   },
 ];
 
@@ -53,6 +57,7 @@ export default function DiscoverScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showAiNudges, setShowAiNudges] = useState(false);
   const [selectedNudge, setSelectedNudge] = useState<any>(null);
+  const [tryingNudge, setTryingNudge] = useState<any>(null);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [aiGeneratedNudges, setAiGeneratedNudges] = useState<any[]>([]);
   const { toast } = useToast();
@@ -65,8 +70,8 @@ export default function DiscoverScreen() {
       const { data, error } = await supabase.functions.invoke('generate-nudge', {
         body: {
           context: selectedCategory || 'general wellbeing',
-          category: selectedCategory || 'mindfulness',
-          mood: 'curious and open'
+          requested_category: selectedCategory || undefined,
+          current_mood: 'curious'
         }
       });
 
@@ -92,7 +97,8 @@ export default function DiscoverScreen() {
           difficulty: "Easy",
           frequency: "As needed",
           isAiGenerated: true,
-          interactive_type: data.nudge.interactive_type
+          interactive_type: data.nudge.interactive_type,
+          type: data.nudge.interactive_type?.toLowerCase() || "reflective"
         };
         
         setAiGeneratedNudges(prev => [newNudge, ...prev]);
@@ -114,6 +120,29 @@ export default function DiscoverScreen() {
     } finally {
       setGeneratingAi(false);
     }
+  };
+
+  const handleTryNow = (nudge: any) => {
+    // Convert nudge to interactive format
+    const interactiveNudge = {
+      id: nudge.id,
+      nudge: nudge.title,
+      description: nudge.description,
+      affirmation: "Wonderful! Thank you for trying this nudge.",
+      type: nudge.type || nudge.interactive_type?.toLowerCase() || "reflective",
+      duration: nudge.type === "timer" ? 180 : undefined, // 3 minutes default
+      items: nudge.type === "observational" ? ["Something peaceful", "Something colorful", "Something meaningful"] : undefined
+    };
+    
+    setTryingNudge(interactiveNudge);
+  };
+
+  const handleNudgeComplete = () => {
+    setTryingNudge(null);
+    toast({
+      title: "Nudge Complete! 🌟",
+      description: "Great job! You've added a moment of joy to your day.",
+    });
   };
 
   const allNudges = [...featuredNudges, ...aiGeneratedNudges];
@@ -192,14 +221,58 @@ export default function DiscoverScreen() {
             </div>
           </div>
 
-          <Button onClick={() => toast({ title: "Feature Coming Soon!", description: "Nudge collections will be available soon!" })} className="joy-button-primary w-full">
-            <Plus size={16} className="mr-2" />
-            Add to My Nudges
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => handleTryNow(nudge)} 
+              className="joy-button-primary flex-1"
+            >
+              <Play size={16} className="mr-2" />
+              Try Now
+            </Button>
+            <Button 
+              onClick={() => toast({ title: "Feature Coming Soon!", description: "Nudge collections will be available soon!" })} 
+              className="joy-button-secondary flex-1"
+            >
+              <Plus size={16} className="mr-2" />
+              Add to Collection
+            </Button>
+          </div>
         </div>
       </div>
     );
   };
+
+  // If trying a nudge, show the interactive experience
+  if (tryingNudge) {
+    return (
+      <div className="min-h-screen bg-joy-white pb-20 px-4">
+        <div className="max-w-md mx-auto pt-12">
+          <div className="mb-4">
+            <button
+              onClick={() => setTryingNudge(null)}
+              className="text-joy-steel-blue hover:text-joy-dark-blue font-lato"
+            >
+              ← Back to Discover
+            </button>
+          </div>
+          
+          <div className="joy-card p-6 text-center">
+            <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
+              {tryingNudge.nudge}
+            </h2>
+            <p className="text-joy-steel-blue font-lato mb-6 leading-relaxed">
+              {tryingNudge.description}
+            </p>
+            
+            <InteractiveNudge
+              nudge={tryingNudge}
+              onComplete={handleNudgeComplete}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-joy-white pb-20 px-4">
@@ -276,8 +349,7 @@ export default function DiscoverScreen() {
           <div className="space-y-3">
             {(showAiNudges ? filteredNudges : filteredNudges.filter(n => !n.isAiGenerated))
               .map((nudge) => (
-                <div key={nudge.id} className="joy-card p-4 cursor-pointer hover:bg-joy-light-blue/10 transition-colors"
-                     onClick={() => setSelectedNudge(nudge)}>
+                <div key={nudge.id} className="joy-card p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <h3 className="font-nunito font-semibold text-joy-dark-blue">{nudge.title}</h3>
@@ -299,9 +371,20 @@ export default function DiscoverScreen() {
                         {nudge.difficulty}
                       </span>
                     </div>
-                    <button className="joy-button-primary px-3 py-1 text-sm">
-                      Try Now
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleTryNow(nudge)}
+                        className="joy-button-primary px-3 py-1 text-sm"
+                      >
+                        Try Now
+                      </button>
+                      <button 
+                        onClick={() => setSelectedNudge(nudge)}
+                        className="joy-button-secondary px-3 py-1 text-sm"
+                      >
+                        Details
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

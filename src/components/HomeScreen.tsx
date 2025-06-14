@@ -1,9 +1,11 @@
 
 import { useState } from "react";
-import { Flame, Focus } from "lucide-react";
+import { Flame, Focus, Sparkles, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useStreakData } from "@/hooks/useStreakData";
 import { useTutorial } from "@/hooks/useTutorial";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import PixelAvatar from "./PixelAvatar";
 import InteractiveNudge from "./InteractiveNudge";
 import Celebration from "./Celebration";
@@ -63,9 +65,13 @@ export default function HomeScreen() {
   const [isEngaged, setIsEngaged] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const [showFocusMode, setShowFocusMode] = useState(false);
+  const [showMoreNudges, setShowMoreNudges] = useState(false);
+  const [aiNudges, setAiNudges] = useState<any[]>([]);
+  const [loadingAiNudges, setLoadingAiNudges] = useState(false);
   const { user } = useAuth();
   const { streakData, updateStreak } = useStreakData();
   const { shouldShowTutorial, markTutorialComplete, loading: tutorialLoading } = useTutorial();
+  const { toast } = useToast();
 
   const currentPrompt = prompts[currentPromptIndex];
 
@@ -80,8 +86,78 @@ export default function HomeScreen() {
     
     setTimeout(() => {
       setCelebrating(false);
-      setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
+      setShowMoreNudges(true);
+      generateMoreNudges();
     }, 2000);
+  };
+
+  const generateMoreNudges = async () => {
+    if (loadingAiNudges) return;
+    
+    setLoadingAiNudges(true);
+    try {
+      const nudgePromises = Array.from({ length: 3 }, async () => {
+        const { data, error } = await supabase.functions.invoke('generate-nudge', {
+          body: {
+            context: 'post-completion suggestions',
+            current_mood: 'accomplished',
+            requested_interactive_type: Math.random() > 0.5 ? 'REFLECTIVE' : undefined
+          }
+        });
+
+        if (error) {
+          console.error('Error generating nudge:', error);
+          return null;
+        }
+
+        return data?.nudge;
+      });
+
+      const results = await Promise.all(nudgePromises);
+      const validNudges = results.filter(Boolean);
+      setAiNudges(validNudges);
+      
+      if (validNudges.length === 0) {
+        toast({
+          title: "Something went wrong",
+          description: "Couldn't generate new nudges. Try again later.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error generating multiple nudges:', error);
+      toast({
+        title: "Generation Error", 
+        description: "Couldn't create new nudges. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingAiNudges(false);
+    }
+  };
+
+  const handleTryAiNudge = (nudge: any) => {
+    // Convert AI nudge to our prompt format
+    const aiPrompt = {
+      id: nudge.id,
+      nudge: nudge.title,
+      description: nudge.description,
+      affirmation: "Wonderful! Thank you for trying this personalized nudge.",
+      type: nudge.interactive_type?.toLowerCase() || "reflective"
+    };
+    
+    // Add to prompts array and switch to it
+    const newIndex = prompts.length;
+    prompts.push(aiPrompt);
+    setCurrentPromptIndex(newIndex);
+    setShowMoreNudges(false);
+    setIsEngaged(false);
+  };
+
+  const handleTryAnother = () => {
+    setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
+    setShowMoreNudges(false);
+    setIsEngaged(false);
   };
 
   const handleTutorialComplete = () => {
@@ -172,43 +248,101 @@ export default function HomeScreen() {
           </button>
         </div>
 
-        {/* MAIN NUDGE CARD */}
+        {/* MAIN NUDGE CARD OR MORE NUDGES */}
         <div className="relative z-10">
           <Celebration show={celebrating} />
-          {!celebrating && (
-            <div
-              className="joy-card p-6 text-center animate-fade-in"
-              style={{ minHeight: 340 }}
-              data-tutorial="current-nudge"
-            >
-              <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
-                {currentPrompt.nudge}
-              </h2>
-              <p className="text-joy-steel-blue font-lato mb-6 leading-relaxed">
-                {currentPrompt.description}
-              </p>
-              {!isEngaged ? (
-                <button
-                  onClick={handleEngage}
-                  className="joy-button-primary w-full text-lg mt-3"
-                >
-                  Engage
-                </button>
+          
+          {showMoreNudges ? (
+            <div className="joy-card p-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
+                  What's next?
+                </h2>
+                <p className="text-joy-steel-blue font-lato">
+                  Try another nudge to keep the momentum going!
+                </p>
+              </div>
+
+              {/* AI Generated Nudges */}
+              {loadingAiNudges ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="animate-spin text-joy-coral mr-2" size={20} />
+                  <span className="text-joy-steel-blue font-lato">Creating personalized nudges...</span>
+                </div>
               ) : (
-                <InteractiveNudge
-                  nudge={currentPrompt}
-                  onComplete={handleComplete}
-                />
+                <div className="space-y-4 mb-6">
+                  {aiNudges.map((nudge, index) => (
+                    <div key={nudge.id || index} className="border border-joy-light-blue/30 rounded-lg p-4 hover:bg-joy-light-blue/5 transition-colors">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="text-joy-coral" size={16} />
+                        <h3 className="font-nunito font-semibold text-joy-dark-blue">{nudge.title}</h3>
+                      </div>
+                      <p className="text-joy-steel-blue font-lato text-sm mb-3">{nudge.description}</p>
+                      <button
+                        onClick={() => handleTryAiNudge(nudge)}
+                        className="joy-button-primary text-sm px-4 py-2"
+                      >
+                        Try This Nudge
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
-            </div>
-          )}
-          {celebrating && (
-            <div className="joy-card p-8 text-center animate-fade-in">
-              <div className="text-4xl mb-4">🌟</div>
-              <div className="joy-script text-2xl">
-                {currentPrompt.affirmation}
+
+              {/* Action buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleTryAnother}
+                  className="joy-button-secondary flex-1"
+                >
+                  Try Another Classic
+                </button>
+                <button
+                  onClick={() => setShowMoreNudges(false)}
+                  className="joy-button-primary flex-1"
+                >
+                  I'm Done for Now
+                </button>
               </div>
             </div>
+          ) : (
+            <>
+              {!celebrating && (
+                <div
+                  className="joy-card p-6 text-center animate-fade-in"
+                  style={{ minHeight: 340 }}
+                  data-tutorial="current-nudge"
+                >
+                  <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
+                    {currentPrompt.nudge}
+                  </h2>
+                  <p className="text-joy-steel-blue font-lato mb-6 leading-relaxed">
+                    {currentPrompt.description}
+                  </p>
+                  {!isEngaged ? (
+                    <button
+                      onClick={handleEngage}
+                      className="joy-button-primary w-full text-lg mt-3"
+                    >
+                      Engage
+                    </button>
+                  ) : (
+                    <InteractiveNudge
+                      nudge={currentPrompt}
+                      onComplete={handleComplete}
+                    />
+                  )}
+                </div>
+              )}
+              {celebrating && (
+                <div className="joy-card p-8 text-center animate-fade-in">
+                  <div className="text-4xl mb-4">🌟</div>
+                  <div className="joy-script text-2xl">
+                    {currentPrompt.affirmation}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
