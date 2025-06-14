@@ -1,11 +1,14 @@
 
 import { useState } from "react";
-import { Flame } from "lucide-react";
+import { Flame, Focus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useStreakData } from "@/hooks/useStreakData";
+import { useTutorial } from "@/hooks/useTutorial";
 import PixelAvatar from "./PixelAvatar";
 import InteractiveNudge from "./InteractiveNudge";
 import Celebration from "./Celebration";
+import Tutorial from "./Tutorial";
+import FocusMode from "./FocusMode";
 
 const prompts = [
   {
@@ -59,8 +62,10 @@ export default function HomeScreen() {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [isEngaged, setIsEngaged] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
+  const [showFocusMode, setShowFocusMode] = useState(false);
   const { user } = useAuth();
   const { streakData, updateStreak } = useStreakData();
+  const { shouldShowTutorial, markTutorialComplete, loading: tutorialLoading } = useTutorial();
 
   const currentPrompt = prompts[currentPromptIndex];
 
@@ -79,6 +84,14 @@ export default function HomeScreen() {
     }, 2000);
   };
 
+  const handleTutorialComplete = () => {
+    markTutorialComplete();
+  };
+
+  const handleTutorialSkip = () => {
+    markTutorialComplete();
+  };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'there';
@@ -92,6 +105,14 @@ export default function HomeScreen() {
   };
 
   const displayStreak = streakData?.current_streak_days || 0;
+
+  if (tutorialLoading) {
+    return (
+      <div className="min-h-screen bg-joy-white flex items-center justify-center">
+        <div className="text-joy-steel-blue font-nunito">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-joy-white pb-20 px-4">
@@ -113,6 +134,20 @@ export default function HomeScreen() {
               <span className="font-lato text-joy-steel-blue text-sm ml-1">streak</span>
             </div>
           </div>
+        </div>
+
+        {/* Focus Mode Button */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowFocusMode(true)}
+            className="w-full bg-gradient-to-r from-joy-steel-blue to-joy-dark-blue text-white rounded-xl p-4 flex items-center justify-center gap-3 hover:from-joy-dark-blue hover:to-joy-steel-blue transition-all duration-200 shadow-lg"
+          >
+            <Focus className="w-6 h-6" />
+            <div className="text-left">
+              <div className="font-nunito font-semibold text-lg">Start Focus Time</div>
+              <div className="font-lato text-sm opacity-90">Deep work with joy</div>
+            </div>
+          </button>
         </div>
 
         {/* MAIN NUDGE CARD */}
@@ -152,6 +187,19 @@ export default function HomeScreen() {
           </div>
         )}
       </div>
+
+      {/* Tutorial Modal */}
+      {shouldShowTutorial && (
+        <Tutorial
+          onComplete={handleTutorialComplete}
+          onSkip={handleTutorialSkip}
+        />
+      )}
+
+      {/* Focus Mode Modal */}
+      {showFocusMode && (
+        <FocusMode onClose={() => setShowFocusMode(false)} />
+      )}
     </div>
   );
 }

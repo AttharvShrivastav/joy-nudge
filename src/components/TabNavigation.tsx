@@ -1,21 +1,21 @@
 
-import { Home, Search, Flower, Settings } from "lucide-react";
+import { Home, Eye, Flower2, Settings } from "lucide-react";
 
 interface TabNavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
-const tabs = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'discover', label: 'Discover', icon: Search },
-  { id: 'garden', label: 'Garden', icon: Flower },
-  { id: 'settings', label: 'Settings', icon: Settings },
-];
+const TabNavigation = ({ activeTab, onTabChange }: TabNavigationProps) => {
+  const tabs = [
+    { id: 'home', icon: Home, label: 'Home' },
+    { id: 'discover', icon: Eye, label: 'Discover' },
+    { id: 'garden', icon: Flower2, label: 'Garden' },
+    { id: 'settings', icon: Settings, label: 'Settings' },
+  ];
 
-export default function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-joy-white/95 backdrop-blur-md border-t border-joy-light-blue/30 px-4 py-2 z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-joy-white border-t-2 border-joy-light-blue px-4 py-2 safe-area-bottom">
       <div className="flex justify-around items-center max-w-md mx-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -24,17 +24,22 @@ export default function TabNavigation({ activeTab, onTabChange }: TabNavigationP
           return (
             <button
               key={tab.id}
+              data-tab={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`joy-tab-button ${isActive ? 'active' : ''}`}
+              className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-200 ${
+                isActive
+                  ? 'bg-joy-light-blue text-joy-dark-blue shadow-md'
+                  : 'text-joy-steel-blue hover:text-joy-dark-blue hover:bg-joy-light-blue/50'
+              }`}
             >
-              <Icon size={24} className={isActive ? 'text-joy-coral' : 'text-joy-steel-blue'} />
-              <span className={`text-xs font-lato mt-1 ${isActive ? 'text-joy-coral font-medium' : 'text-joy-steel-blue'}`}>
-                {tab.label}
-              </span>
+              <Icon size={20} className="mb-1" />
+              <span className="text-xs font-nunito font-medium">{tab.label}</span>
             </button>
           );
         })}
       </div>
     </div>
   );
-}
+};
+
+export default TabNavigation;

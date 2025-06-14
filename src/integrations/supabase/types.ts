@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      focus_sessions: {
+        Row: {
+          break_duration_minutes: number
+          completed_at: string | null
+          created_at: string | null
+          duration_minutes: number
+          id: string
+          session_type: string | null
+          user_id: string
+        }
+        Insert: {
+          break_duration_minutes: number
+          completed_at?: string | null
+          created_at?: string | null
+          duration_minutes: number
+          id?: string
+          session_type?: string | null
+          user_id: string
+        }
+        Update: {
+          break_duration_minutes?: number
+          completed_at?: string | null
+          created_at?: string | null
+          duration_minutes?: number
+          id?: string
+          session_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       nudge_completions: {
         Row: {
           completed_at: string | null
@@ -277,6 +307,7 @@ export type Database = {
           subscription_status:
             | Database["public"]["Enums"]["subscription_status"]
             | null
+          tutorial_seen: boolean | null
           username: string | null
         }
         Insert: {
@@ -290,6 +321,7 @@ export type Database = {
           subscription_status?:
             | Database["public"]["Enums"]["subscription_status"]
             | null
+          tutorial_seen?: boolean | null
           username?: string | null
         }
         Update: {
@@ -303,6 +335,7 @@ export type Database = {
           subscription_status?:
             | Database["public"]["Enums"]["subscription_status"]
             | null
+          tutorial_seen?: boolean | null
           username?: string | null
         }
         Relationships: []
