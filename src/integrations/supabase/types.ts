@@ -92,6 +92,7 @@ export type Database = {
             | null
           is_ai_generated: boolean | null
           title: string
+          user_id: string | null
         }
         Insert: {
           category: string
@@ -103,6 +104,7 @@ export type Database = {
             | null
           is_ai_generated?: boolean | null
           title: string
+          user_id?: string | null
         }
         Update: {
           category?: string
@@ -114,8 +116,17 @@ export type Database = {
             | null
           is_ai_generated?: boolean | null
           title?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "nudges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reflections: {
         Row: {
