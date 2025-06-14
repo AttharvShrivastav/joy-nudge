@@ -120,7 +120,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-joy-white to-joy-light-blue/10 p-6 pt-20 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-joy-white to-joy-light-blue/10 p-4 pt-16 pb-24">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -130,7 +130,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="text-center mb-8"
+          className="text-center mb-6"
         >
           <motion.div
             animate={{ 
@@ -142,65 +142,67 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="text-5xl mb-4"
+            className="text-4xl mb-3"
           >
             🔍
           </motion.div>
-          <h1 className="text-3xl font-nunito font-bold text-joy-dark-blue mb-2">
+          <h1 className="text-2xl font-fredoka font-bold text-joy-dark-blue mb-2">
             Discover Nudges
           </h1>
-          <p className="text-joy-steel-blue font-lato">
+          <p className="text-joy-steel-blue font-lato text-sm">
             Find the perfect nudge for your current mood
           </p>
         </motion.div>
 
-        {/* Search and Filter */}
+        {/* Search and Filter - Mobile Optimized */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-6"
+          className="mb-4"
         >
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-joy-steel-blue" size={18} />
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-joy-steel-blue" size={16} />
             <Input
               placeholder="Search nudges..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 py-3 rounded-2xl border-joy-light-blue/20 focus:border-joy-coral bg-joy-white"
+              className="pl-10 py-2 rounded-xl border-joy-light-blue/20 focus:border-joy-coral bg-joy-white text-sm"
             />
           </div>
 
-          <div className="flex items-center space-x-2 overflow-x-auto pb-2">
-            <Filter size={16} className="text-joy-steel-blue flex-shrink-0" />
-            {categories.map((category) => (
-              <motion.div
-                key={category}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Badge
-                  variant={selectedCategory === category ? "default" : "secondary"}
-                  className={`cursor-pointer whitespace-nowrap transition-all duration-200 ${
-                    selectedCategory === category
-                      ? "bg-joy-coral text-white"
-                      : "bg-joy-light-blue/10 text-joy-dark-blue hover:bg-joy-light-blue/20"
-                  }`}
-                  onClick={() => setSelectedCategory(category)}
+          <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+            <Filter size={14} className="text-joy-steel-blue flex-shrink-0" />
+            <div className="flex space-x-2">
+              {categories.map((category) => (
+                <motion.div
+                  key={category}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  {category}
-                </Badge>
-              </motion.div>
-            ))}
+                  <Badge
+                    variant={selectedCategory === category ? "default" : "secondary"}
+                    className={`cursor-pointer whitespace-nowrap transition-all duration-200 text-xs px-3 py-1 ${
+                      selectedCategory === category
+                        ? "bg-joy-coral text-white"
+                        : "bg-joy-light-blue/10 text-joy-dark-blue hover:bg-joy-light-blue/20"
+                    }`}
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category}
+                  </Badge>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </motion.div>
 
-        {/* Nudges Grid */}
+        {/* Nudges Grid - Mobile Optimized */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="space-y-4"
+          className="space-y-3"
         >
           <AnimatePresence>
             {filteredNudges.map((nudge, index) => (
@@ -210,15 +212,15 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ delay: 0.05 * index }}
-                whileHover={{ scale: 1.02, y: -2 }}
-                className="bg-joy-white rounded-2xl p-5 shadow-lg border border-joy-light-blue/20 transition-all duration-300"
+                whileHover={{ scale: 1.01, y: -2 }}
+                className="bg-joy-white rounded-xl p-4 shadow-lg border border-joy-light-blue/20 transition-all duration-300"
               >
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h3 className="font-nunito font-semibold text-joy-dark-blue text-lg mb-2">
+                    <h3 className="font-nunito font-semibold text-joy-dark-blue text-base mb-2">
                       {nudge.title}
                     </h3>
-                    <div className="flex items-center space-x-2 mb-3">
+                    <div className="flex items-center space-x-2 mb-2 flex-wrap">
                       <Badge className="bg-joy-sage/20 text-joy-sage text-xs">
                         {nudge.category}
                       </Badge>
@@ -227,7 +229,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
                       </Badge>
                       {nudge.is_ai_generated && (
                         <Badge className="bg-joy-coral/20 text-joy-coral text-xs flex items-center">
-                          <Sparkles size={10} className="mr-1" />
+                          <Sparkles size={8} className="mr-1" />
                           AI
                         </Badge>
                       )}
@@ -236,13 +238,13 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
                   <LikeButton nudgeId={nudge.id} nudgeData={nudge} size="sm" />
                 </div>
                 
-                <p className="text-joy-steel-blue font-lato text-sm mb-4 leading-relaxed">
+                <p className="text-joy-steel-blue font-lato text-sm mb-3 leading-relaxed">
                   {nudge.description}
                 </p>
 
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => handleTryNow(nudge)}
                   className="w-full bg-joy-coral text-white py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2"
                 >
@@ -257,10 +259,10 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-12"
+              className="text-center py-8"
             >
-              <div className="text-4xl mb-4">🔍</div>
-              <p className="text-joy-steel-blue font-lato">
+              <div className="text-3xl mb-3">🔍</div>
+              <p className="text-joy-steel-blue font-lato text-sm">
                 No nudges found. Try adjusting your search or filters.
               </p>
             </motion.div>

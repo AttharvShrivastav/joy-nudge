@@ -1,5 +1,36 @@
-
 export const fallbackNudges = [
+  // Breathing nudges first (crucial for mobile app)
+  {
+    title: "Mindful Breathing",
+    description: "Take 5 deep breaths. Inhale for 4 counts, hold for 4, exhale for 6. Feel your body relax with each breath.",
+    category: "Mindfulness",
+    interactive_type: "BREATHING"
+  },
+  {
+    title: "Box Breathing",
+    description: "Practice box breathing: inhale for 4, hold for 4, exhale for 4, hold for 4. Repeat this cycle 5 times.",
+    category: "Mindfulness", 
+    interactive_type: "BREATHING"
+  },
+  {
+    title: "Calming Breath",
+    description: "Close your eyes and take 3 slow, deep breaths. Focus only on the sensation of air entering and leaving your body.",
+    category: "Mindfulness",
+    interactive_type: "BREATHING"
+  },
+  {
+    title: "4-7-8 Breathing",
+    description: "Inhale for 4 counts, hold for 7, exhale for 8. This technique helps calm your nervous system naturally.",
+    category: "Mindfulness",
+    interactive_type: "BREATHING"
+  },
+  {
+    title: "Belly Breathing",
+    description: "Place one hand on your chest, one on your belly. Breathe so only the bottom hand moves. Practice for 2 minutes.",
+    category: "Mindfulness",
+    interactive_type: "BREATHING"
+  },
+  // Reflective nudges
   {
     title: "Window Reflections",
     description: "Look out your window for 3 minutes. Write about what you see and how it makes you feel right now.",
