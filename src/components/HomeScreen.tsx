@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Flame, Focus, Sparkles, RefreshCw, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -5,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStreakData } from "@/hooks/useStreakData";
 import { useTutorial } from "@/hooks/useTutorial";
 import { useNudgeLikes } from "@/hooks/useNudgeLikes";
+import { useGardenData } from "@/hooks/useGardenData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { getRandomFallbackNudge } from "@/data/fallbackNudges";
@@ -80,6 +82,7 @@ export default function HomeScreen() {
   const { streakData, updateStreak } = useStreakData();
   const { shouldShowTutorial, markTutorialComplete, loading: tutorialLoading } = useTutorial();
   const { toggleLike, isLiked } = useNudgeLikes();
+  const { gardenData } = useGardenData();
   const { toast } = useToast();
 
   const currentPrompt = prompts[currentPromptIndex];
@@ -95,7 +98,7 @@ export default function HomeScreen() {
       const lastMoodDate = localStorage.getItem('lastMoodDate');
       const today = new Date().toDateString();
       
-      if (lastMoodDate !== today) {
+      if (lastMoodDate !== today && !gardenData.todaysMood) {
         setTimeout(() => setShowMoodSelector(true), 500);
       }
     };
@@ -103,13 +106,26 @@ export default function HomeScreen() {
     if (user && !tutorialLoading) {
       initializeApp();
     }
-  }, [user, tutorialLoading]);
+  }, [user, tutorialLoading, gardenData.todaysMood]);
 
-  const handleMoodSelect = (mood: string) => {
+  const handleMoodSelect = async (mood: string) => {
     setCurrentMood(mood);
     setShowMoodSelector(false);
     localStorage.setItem('lastMoodDate', new Date().toDateString());
     localStorage.setItem('currentMood', mood);
+    
+    // Store mood in database
+    try {
+      await supabase
+        .from('mood_logs')
+        .insert({
+          user_id: user?.id,
+          mood_value: mood,
+          timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+      console.error('Error storing mood:', error);
+    }
     
     toast({
       title: `Feeling ${mood} today`,
