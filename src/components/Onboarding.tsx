@@ -45,7 +45,7 @@ const steps = [
 ];
 
 const spring = {
-  type: "spring",
+  type: "spring" as const,
   stiffness: 500,
   damping: 32
 };
@@ -75,7 +75,7 @@ const Onboarding = ({ onDone }: { onDone: () => void }) => {
           initial={{ opacity: 0, y: 32 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -24 }}
-          transition={{ ...spring, duration: 0.54 }}
+          transition={spring}
         >
           <div className="flex flex-col items-center gap-2 mb-2">
             {stepIdx === 0 && (
