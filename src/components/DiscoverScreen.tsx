@@ -4,6 +4,8 @@ import { Search, Heart, Clock, Sparkles, Users, Zap, Plus, Bell, Calendar } from
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Switch } from "./ui/switch";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "./ui/use-toast";
 
 const nudgeCategories = [
   { id: "mindfulness", name: "Mindfulness", icon: "🧘", color: "bg-mint" },
@@ -46,59 +48,75 @@ const featuredNudges = [
   },
 ];
 
-const aiGeneratedNudges = [
-  {
-    id: 4,
-    title: "Cloud gazing meditation",
-    description: "Find shapes in clouds to practice mindful observation",
-    category: "mindfulness",
-    duration: "5 min",
-    difficulty: "Easy",
-    frequency: "As needed",
-    isAiGenerated: true
-  },
-  {
-    id: 5,
-    title: "Compliment mirror practice",
-    description: "Give yourself 3 genuine compliments in the mirror",
-    category: "gratitude",
-    duration: "2 min",
-    difficulty: "Medium",
-    frequency: "Daily",
-    isAiGenerated: true
-  },
-];
-
 export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showAiNudges, setShowAiNudges] = useState(false);
   const [selectedNudge, setSelectedNudge] = useState<any>(null);
   const [generatingAi, setGeneratingAi] = useState(false);
-  const [newAiNudges, setNewAiNudges] = useState<any[]>([]);
+  const [aiGeneratedNudges, setAiGeneratedNudges] = useState<any[]>([]);
+  const { toast } = useToast();
 
   const generateAiNudges = async () => {
     setGeneratingAi(true);
-    // Simulate AI generation
-    setTimeout(() => {
-      const newNudges = [
-        {
-          id: Date.now(),
-          title: "Gratitude photo walk",
-          description: "Take photos of 3 things that bring you joy",
-          category: "gratitude",
-          duration: "10 min",
-          difficulty: "Easy",
-          frequency: "Weekly",
-          isAiGenerated: true
+    try {
+      console.log('Calling generate-nudge function...');
+      
+      const { data, error } = await supabase.functions.invoke('generate-nudge', {
+        body: {
+          context: selectedCategory || 'general wellbeing',
+          category: selectedCategory || 'mindfulness',
+          mood: 'curious and open'
         }
-      ];
-      setNewAiNudges(prev => [...prev, ...newNudges]);
+      });
+
+      console.log('Generate nudge response:', { data, error });
+
+      if (error) {
+        console.error('Error generating nudge:', error);
+        toast({
+          title: "Generation Error",
+          description: "Could not generate new nudge ideas. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (data?.success && data?.nudge) {
+        const newNudge = {
+          id: data.nudge.id,
+          title: data.nudge.title,
+          description: data.nudge.description,
+          category: data.nudge.category,
+          duration: "3-5 min",
+          difficulty: "Easy",
+          frequency: "As needed",
+          isAiGenerated: true,
+          interactive_type: data.nudge.interactive_type
+        };
+        
+        setAiGeneratedNudges(prev => [newNudge, ...prev]);
+        
+        toast({
+          title: "New Nudge Generated!",
+          description: data.message || "A fresh, unique nudge has been created just for you!",
+        });
+      } else {
+        throw new Error('No nudge data received');
+      }
+    } catch (error) {
+      console.error('Error generating AI nudges:', error);
+      toast({
+        title: "Generation Error",
+        description: "Could not generate new nudge ideas. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setGeneratingAi(false);
-    }, 2000);
+    }
   };
 
-  const allNudges = [...featuredNudges, ...aiGeneratedNudges, ...newAiNudges];
+  const allNudges = [...featuredNudges, ...aiGeneratedNudges];
   const filteredNudges = allNudges
     .filter(nudge => !selectedCategory || nudge.category === selectedCategory)
     .filter(nudge => !searchQuery || nudge.title.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -174,7 +192,7 @@ export default function DiscoverScreen() {
             </div>
           </div>
 
-          <Button onClick={() => alert('Nudge added to your collection!')} className="joy-button-primary w-full">
+          <Button onClick={() => toast({ title: "Feature Coming Soon!", description: "Nudge collections will be available soon!" })} className="joy-button-primary w-full">
             <Plus size={16} className="mr-2" />
             Add to My Nudges
           </Button>
@@ -240,6 +258,14 @@ export default function DiscoverScreen() {
             <Switch checked={showAiNudges} onCheckedChange={setShowAiNudges} />
             <span className="font-lato text-joy-steel-blue">Show AI suggestions</span>
           </div>
+
+          {aiGeneratedNudges.length > 0 && showAiNudges && (
+            <div className="mb-4 p-3 bg-joy-coral/5 rounded-lg border border-joy-coral/20">
+              <div className="text-sm text-joy-coral font-lato">
+                ✨ {aiGeneratedNudges.length} AI-generated nudge{aiGeneratedNudges.length > 1 ? 's' : ''} available
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Featured Nudges */}
@@ -280,6 +306,14 @@ export default function DiscoverScreen() {
                 </div>
               ))}
           </div>
+
+          {showAiNudges && filteredNudges.filter(n => n.isAiGenerated).length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-joy-steel-blue font-lato mb-4">
+                No AI-generated nudges yet. Click "Generate New Ideas" to create some!
+              </div>
+            </div>
+          )}
         </div>
 
         {selectedNudge && (
