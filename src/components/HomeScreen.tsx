@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, RefreshCw } from "lucide-react";
@@ -330,11 +331,9 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                 <div className="space-y-3">
                   <AnimatedButton
                     onClick={handleTryNow}
+                    text="Try Now ✨"
                     className="w-full bg-joy-coral text-white py-3 rounded-2xl font-semibold"
-                    disabled={isGenerating}
-                  >
-                    Try Now ✨
-                  </AnimatedButton>
+                  />
 
                   <motion.button
                     whileHover={{ scale: 1.02 }}
