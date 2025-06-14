@@ -19,14 +19,6 @@ import LoadingScreen from "./LoadingScreen";
 
 const prompts = [
   {
-    id: 1,
-    nudge: "Take 3 deep breaths",
-    description: "Center yourself with mindful breathing. Follow the gentle guide to inhale, hold, and exhale three times.",
-    affirmation: "Beautiful! You've created a moment of calm.",
-    type: "breathe",
-    duration: 3
-  },
-  {
     id: 2,
     nudge: "Stretch for 1 minute",
     description: "Give your body some love with gentle movement. Any stretch that feels good to you.",
@@ -65,6 +57,15 @@ const prompts = [
   }
 ];
 
+const breathingNudge = {
+  id: 1,
+  nudge: "Take 3 deep breaths",
+  description: "Center yourself with mindful breathing. Follow the gentle guide to inhale, hold, and exhale three times.",
+  affirmation: "Beautiful! You've created a moment of calm.",
+  type: "breathe",
+  duration: 3
+};
+
 export default function HomeScreen() {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [isEngaged, setIsEngaged] = useState(false);
@@ -77,6 +78,7 @@ export default function HomeScreen() {
   const [currentMood, setCurrentMood] = useState<string>('open');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showCelebrationText, setShowCelebrationText] = useState(false);
+  const [isFirstTime, setIsFirstTime] = useState(false);
   
   const { user } = useAuth();
   const { streakData, updateStreak } = useStreakData();
@@ -85,62 +87,94 @@ export default function HomeScreen() {
   const { gardenData } = useGardenData();
   const { toast } = useToast();
 
-  // Sound effect function
+  // Sound effect function with proper audio context handling
   const playSound = (type: string) => {
     try {
-      const audio = new Audio();
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      const createTone = (frequency: number, duration: number, volume: number = 0.3) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      };
+
       switch (type) {
         case 'button_press':
-          audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          createTone(800, 0.1, 0.2);
           break;
         case 'celebration':
-          audio.src = 'data:audio/wav;base64,UklGRpAGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YWwGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          // Celebratory ascending chord
+          createTone(523, 0.3, 0.3); // C5
+          setTimeout(() => createTone(659, 0.3, 0.3), 100); // E5
+          setTimeout(() => createTone(784, 0.4, 0.3), 200); // G5
           break;
         case 'engage':
-          audio.src = 'data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YUAGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          createTone(440, 0.2, 0.25);
+          setTimeout(() => createTone(554, 0.2, 0.25), 100);
           break;
         case 'like':
-          audio.src = 'data:audio/wav;base64,UklGRhAGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YeQFAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          createTone(880, 0.15, 0.2);
+          setTimeout(() => createTone(1108, 0.15, 0.2), 50);
           break;
         case 'mood_select':
-          audio.src = 'data:audio/wav;base64,UklGRjQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          createTone(660, 0.2, 0.25);
+          break;
+        case 'completion':
+          // Magical completion sound
+          createTone(523, 0.2, 0.3);
+          setTimeout(() => createTone(659, 0.2, 0.3), 100);
+          setTimeout(() => createTone(784, 0.2, 0.3), 200);
+          setTimeout(() => createTone(1047, 0.3, 0.3), 300);
           break;
       }
-      audio.volume = 0.3;
-      audio.play().catch(() => {}); // Silently fail if audio can't play
     } catch (error) {
-      // Silently handle audio errors
+      console.log('Audio not available:', error);
     }
   };
+
+  // Check if this is the user's first time and show breathing nudge
+  useEffect(() => {
+    const hasSeenBreathingNudge = localStorage.getItem('hasSeenBreathingNudge');
+    if (!hasSeenBreathingNudge && user) {
+      setIsFirstTime(true);
+    }
+  }, [user]);
 
   // Check for queued nudges and use them instead of default prompts
   useEffect(() => {
     const queuedNudge = getNextQueuedNudge();
-    if (queuedNudge) {
-      // Find if this nudge is already in prompts array
+    if (queuedNudge && !isFirstTime) {
       const existingIndex = prompts.findIndex(p => p.id.toString() === queuedNudge.id.toString());
       
       if (existingIndex === -1) {
-        // Add the queued nudge to prompts array and set it as current
         prompts.unshift(queuedNudge);
         setCurrentPromptIndex(0);
       } else {
-        // Use existing nudge
         setCurrentPromptIndex(existingIndex);
       }
     }
-  }, []);
+  }, [isFirstTime]);
 
-  const currentPrompt = prompts[currentPromptIndex];
+  const currentPrompt = isFirstTime ? breathingNudge : prompts[currentPromptIndex];
 
   // Initialize app with loading screen and mood selector
   useEffect(() => {
     const initializeApp = async () => {
-      // Simulate loading time
       await new Promise(resolve => setTimeout(resolve, 2000));
       setIsInitialLoading(false);
       
-      // Check if mood was already set today
       const lastMoodDate = localStorage.getItem('lastMoodDate');
       const today = new Date().toDateString();
       
@@ -161,7 +195,6 @@ export default function HomeScreen() {
     localStorage.setItem('lastMoodDate', new Date().toDateString());
     localStorage.setItem('currentMood', mood);
     
-    // Store mood in database
     try {
       await supabase
         .from('mood_logs')
@@ -184,29 +217,40 @@ export default function HomeScreen() {
     playSound('engage');
     setIsEngaged(true);
   };
+
+  const handleSkipBreathing = () => {
+    playSound('button_press');
+    if (isFirstTime) {
+      localStorage.setItem('hasSeenBreathingNudge', 'true');
+      setIsFirstTime(false);
+    }
+    setIsEngaged(false);
+  };
   
   const handleComplete = async () => {
-    playSound('celebration');
+    playSound('completion');
     setIsEngaged(false);
     setCelebrating(true);
     setShowCelebrationText(false);
     
-    // Remove completed nudge from queue if it was queued
-    removeFromQueue(currentPrompt.id.toString());
+    if (isFirstTime) {
+      localStorage.setItem('hasSeenBreathingNudge', 'true');
+      setIsFirstTime(false);
+    }
     
+    removeFromQueue(currentPrompt.id.toString());
     await updateStreak();
     
-    // Show celebration text after confetti animation
     setTimeout(() => {
       setShowCelebrationText(true);
-    }, 1500);
+    }, 800);
     
     setTimeout(() => {
       setCelebrating(false);
       setShowCelebrationText(false);
       setShowMoreNudges(true);
       generateMoreNudges();
-    }, 3500);
+    }, 2500);
   };
 
   const generateMoreNudges = async () => {
@@ -237,7 +281,6 @@ export default function HomeScreen() {
       setAiNudges(validNudges);
     } catch (error) {
       console.error('Error generating nudges:', error);
-      // Use fallback nudges
       const fallbackNudges = Array.from({ length: 3 }, () => getRandomFallbackNudge());
       setAiNudges(fallbackNudges);
     } finally {
@@ -286,19 +329,18 @@ export default function HomeScreen() {
 
   const displayStreak = streakData?.current_streak_days || 0;
 
-  // Enhanced streak display with milestone celebration
   const getStreakDisplay = () => {
     const streak = displayStreak;
     if (streak >= 30) {
-      return { emoji: "🏆", color: "from-yellow-400 to-orange-500", message: "Streak Master!" };
+      return { emoji: "🏆", color: "from-joy-coral to-red-500", message: "Streak Master!" };
     } else if (streak >= 14) {
-      return { emoji: "🌟", color: "from-purple-400 to-pink-500", message: "Two Weeks Strong!" };
+      return { emoji: "🌟", color: "from-joy-coral to-red-400", message: "Two Weeks Strong!" };
     } else if (streak >= 7) {
-      return { emoji: "🔥", color: "from-red-400 to-orange-500", message: "One Week!" };
+      return { emoji: "🔥", color: "from-joy-coral to-red-500", message: "One Week!" };
     } else if (streak >= 3) {
-      return { emoji: "⚡", color: "from-blue-400 to-purple-500", message: "Building momentum!" };
+      return { emoji: "⚡", color: "from-joy-coral to-red-400", message: "Building momentum!" };
     }
-    return { emoji: "🌱", color: "from-green-400 to-blue-500", message: "Getting started!" };
+    return { emoji: "🌱", color: "from-joy-coral to-red-300", message: "Getting started!" };
   };
 
   const streakDisplay = getStreakDisplay();
@@ -335,7 +377,6 @@ export default function HomeScreen() {
           transition={{ delay: 0.1 }}
           className="flex justify-between items-start mb-6"
         >
-          {/* Logo */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             className="flex items-center gap-2"
@@ -350,7 +391,6 @@ export default function HomeScreen() {
             </span>
           </motion.div>
 
-          {/* Pixelated Avatar */}
           <motion.div 
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -373,7 +413,6 @@ export default function HomeScreen() {
               {getGreeting()}
             </span>
             
-            {/* Enhanced streak display */}
             <div className={`flex items-center mt-1 gap-2 bg-gradient-to-r ${streakDisplay.color} px-4 py-2 rounded-full shadow-lg border-2 border-white/50`}>
               <span className="text-2xl">{streakDisplay.emoji}</span>
               <div className="text-center">
@@ -409,22 +448,12 @@ export default function HomeScreen() {
           </motion.button>
         </motion.div>
 
-        {/* MAIN NUDGE CARD OR MORE NUDGES - Fixed z-index */}
+        {/* MAIN NUDGE CARD - Fixed positioning */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className={`relative ${isEngaged ? 'z-50' : 'z-10'}`}
-          style={{ position: isEngaged ? 'fixed' : 'relative', 
-                   top: isEngaged ? '0' : 'auto',
-                   left: isEngaged ? '0' : 'auto',
-                   right: isEngaged ? '0' : 'auto',
-                   bottom: isEngaged ? '0' : 'auto',
-                   backgroundColor: isEngaged ? 'rgba(255, 255, 255, 0.98)' : 'transparent',
-                   padding: isEngaged ? '20px' : '0',
-                   display: isEngaged ? 'flex' : 'block',
-                   alignItems: isEngaged ? 'center' : 'normal',
-                   justifyContent: isEngaged ? 'center' : 'normal' }}
+          className={`relative ${isEngaged ? 'fixed inset-0 z-40 bg-joy-white/95 backdrop-blur-sm flex items-center justify-center p-4' : 'z-10'}`}
         >
           <Celebration show={celebrating} />
           
@@ -446,7 +475,6 @@ export default function HomeScreen() {
                   </p>
                 </div>
 
-                {/* AI Generated Nudges */}
                 <AnimatePresence>
                   {loadingAiNudges ? (
                     <motion.div
@@ -505,7 +533,6 @@ export default function HomeScreen() {
                   )}
                 </AnimatePresence>
 
-                {/* Action buttons */}
                 <div className="flex gap-3">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -565,18 +592,33 @@ export default function HomeScreen() {
                     
                     <AnimatePresence mode="wait">
                       {!isEngaged ? (
-                        <motion.button
-                          key="engage-button"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={handleEngage}
-                          className="joy-button-primary w-full text-lg mt-3"
-                        >
-                          Engage
-                        </motion.button>
+                        <div className="space-y-3">
+                          <motion.button
+                            key="engage-button"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleEngage}
+                            className="joy-button-primary w-full text-lg"
+                          >
+                            Engage
+                          </motion.button>
+                          
+                          {isFirstTime && currentPrompt.type === 'breathe' && (
+                            <motion.button
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={handleSkipBreathing}
+                              className="joy-button-secondary w-full text-sm"
+                            >
+                              Skip for now
+                            </motion.button>
+                          )}
+                        </div>
                       ) : (
                         <motion.div
                           key="interactive-nudge"
@@ -587,6 +629,7 @@ export default function HomeScreen() {
                           <InteractiveNudge
                             nudge={currentPrompt}
                             onComplete={handleComplete}
+                            onSkip={currentPrompt.type === 'breathe' ? handleSkipBreathing : undefined}
                           />
                         </motion.div>
                       )}
@@ -607,13 +650,6 @@ export default function HomeScreen() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5 }}
                         >
-                          <div className="mb-4">
-                            <img 
-                              src="/lovable-uploads/424186e2-de89-4a2a-a690-1d1d0f47bbe8.png" 
-                              alt="Joy Nudge" 
-                              className="w-16 h-16 mx-auto rounded-full"
-                            />
-                          </div>
                           <div className="joy-script text-2xl">
                             {currentPrompt.affirmation}
                           </div>

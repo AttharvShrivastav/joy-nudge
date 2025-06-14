@@ -8,9 +8,10 @@ interface BreathingNudgeProps {
     duration?: number;
   };
   onComplete: () => void;
+  onSkip?: () => void;
 }
 
-export default function BreathingNudge({ nudge, onComplete }: BreathingNudgeProps) {
+export default function BreathingNudge({ nudge, onComplete, onSkip }: BreathingNudgeProps) {
   const [currentPhase, setCurrentPhase] = useState(0);
   
   const phases = [
@@ -20,28 +21,44 @@ export default function BreathingNudge({ nudge, onComplete }: BreathingNudgeProp
   ];
   const totalCycles = nudge.duration || 3;
 
-  // Sound effect function for breathing
+  // Enhanced sound effect function for breathing
   const playBreathingSound = (phase: string) => {
     try {
-      const audio = new Audio();
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      const createBreathingTone = (startFreq: number, endFreq: number, duration: number) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(startFreq, audioContext.currentTime);
+        oscillator.frequency.linearRampToValueAtTime(endFreq, audioContext.currentTime + duration);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + duration - 0.1);
+        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      };
+
       switch (phase) {
         case 'Inhale':
-          // Ascending tone for inhale
-          audio.src = 'data:audio/wav;base64,UklGRhwEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YfgDAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          createBreathingTone(200, 400, 3.5); // Ascending tone
           break;
         case 'Exhale':
-          // Descending tone for exhale
-          audio.src = 'data:audio/wav;base64,UklGRiAEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YfwDAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          createBreathingTone(400, 200, 3.5); // Descending tone
           break;
         case 'Hold':
-          // Neutral tone for hold
-          audio.src = 'data:audio/wav;base64,UklGRhgEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YfQDAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          createBreathingTone(300, 300, 2.5); // Steady tone
           break;
       }
-      audio.volume = 0.2;
-      audio.play().catch(() => {}); // Silently fail if audio can't play
     } catch (error) {
-      // Silently handle audio errors
+      console.log('Audio not available:', error);
     }
   };
   
@@ -49,7 +66,6 @@ export default function BreathingNudge({ nudge, onComplete }: BreathingNudgeProp
     const currentPhaseDuration = phases[currentPhase % 3].duration;
     const phaseData = phases[currentPhase % 3];
     
-    // Play sound for current phase
     playBreathingSound(phaseData.name);
     
     const timer = setTimeout(() => {
@@ -68,11 +84,7 @@ export default function BreathingNudge({ nudge, onComplete }: BreathingNudgeProp
   const currentPhaseData = phases[phaseInCycle];
   
   return (
-    <div className="joy-card p-8 text-center">
-      <h3 className="text-xl font-nunito font-semibold text-joy-dark-blue mb-6">
-        {nudge.nudge}
-      </h3>
-      
+    <div className="space-y-6">
       <div className="mb-8">
         <motion.div
           className="w-32 h-32 mx-auto bg-gradient-to-br from-joy-coral/20 to-joy-steel-blue/20 rounded-full flex items-center justify-center border-4 border-joy-steel-blue/30"
@@ -90,13 +102,26 @@ export default function BreathingNudge({ nudge, onComplete }: BreathingNudgeProp
         </motion.div>
       </div>
       
-      <p className="text-joy-steel-blue font-lato mb-4">
+      <p className="text-joy-steel-blue font-lato mb-4 text-center">
         Cycle {currentCycle} of {totalCycles}
       </p>
       
-      <div className="text-sm text-joy-steel-blue/70 font-lato">
+      <div className="text-sm text-joy-steel-blue/70 font-lato text-center mb-4">
         Follow the gentle sounds and visual guide
       </div>
+
+      {onSkip && (
+        <div className="flex justify-center">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onSkip}
+            className="joy-button-secondary text-sm px-4 py-2"
+          >
+            Skip
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 }

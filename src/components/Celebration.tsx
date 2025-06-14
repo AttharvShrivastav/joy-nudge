@@ -26,8 +26,8 @@ export default function Celebration({ show }: { show: boolean }) {
                 initial={{ scale: 0, opacity: 0.2 }}
                 animate={{ scale: [1.1, 1.6, 0.7], opacity: [0.95, 1, 0] }}
                 transition={{
-                  duration: 1.1,
-                  delay: i * 0.07,
+                  duration: 0.8,
+                  delay: i * 0.05,
                   ease: [0.2, 0.6, 0.4, 1]
                 }}
               />
@@ -39,8 +39,8 @@ export default function Celebration({ show }: { show: boolean }) {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: [0, 1.2, 1], opacity: [0, 1, 1] }}
             transition={{
-              duration: 1.2,
-              delay: 0.3,
+              duration: 0.8,
+              delay: 0.2,
               ease: [0.2, 0.6, 0.4, 1]
             }}
             className="flex items-center justify-center"
