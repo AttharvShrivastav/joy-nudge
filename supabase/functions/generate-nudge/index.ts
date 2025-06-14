@@ -79,11 +79,10 @@ serve(async (req) => {
     
     Make it feel like discovering a hidden gem of joy and wonder!`
 
-    console.log('Making request to Gemini API with corrected endpoint')
+    console.log('Making request to Gemini API...')
 
-    // Updated API call to use the correct endpoint format
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -96,8 +95,8 @@ serve(async (req) => {
             }]
           }],
           generationConfig: {
-            temperature: 1.0,
-            topP: 0.95,
+            temperature: 0.9,
+            topP: 0.8,
             topK: 40,
             maxOutputTokens: 1024,
           }
@@ -109,11 +108,12 @@ serve(async (req) => {
       const errorText = await geminiResponse.text()
       console.error('Gemini API error response:', errorText)
       console.error('Gemini API status:', geminiResponse.status)
+      console.error('Gemini API URL used:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`)
       throw new Error(`Gemini API error: ${geminiResponse.status} - ${errorText}`)
     }
 
     const geminiData = await geminiResponse.json()
-    console.log('Gemini response received successfully:', geminiData)
+    console.log('Gemini response received successfully')
 
     const generatedText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
     if (!generatedText) {
@@ -159,6 +159,7 @@ serve(async (req) => {
       throw new Error('Generated nudge missing required fields')
     }
 
+    // Insert into database with user_id for RLS
     const { data: newNudge, error: insertError } = await supabaseClient
       .from('nudges')
       .insert({
@@ -166,7 +167,8 @@ serve(async (req) => {
         description: nudgeData.description,
         category: nudgeData.category,
         interactive_type: nudgeData.interactive_type || 'NONE',
-        is_ai_generated: true
+        is_ai_generated: true,
+        user_id: user.id  // Add user_id for RLS
       })
       .select()
       .single()
