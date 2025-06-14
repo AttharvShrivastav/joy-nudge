@@ -1,14 +1,17 @@
+
 import { useState } from "react";
 import Onboarding from "@/components/Onboarding";
-import JoyDashboard from "@/components/JoyDashboard";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import TabNavigation from "@/components/TabNavigation";
+import HomeScreen from "@/components/HomeScreen";
+import DiscoverScreen from "@/components/DiscoverScreen";
+import GardenScreen from "@/components/GardenScreen";
+import SettingsScreen from "@/components/SettingsScreen";
 
 const Index = () => {
   const [onboarded, setOnboarded] = useState(false);
+  const [activeTab, setActiveTab] = useState('home');
 
   if (!onboarded) {
-    // Onboarding stays fullscreen.
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-joy-gradient transition-all duration-300">
         <Onboarding onDone={() => setOnboarded(true)} />
@@ -16,17 +19,27 @@ const Index = () => {
     );
   }
 
-  // After onboarding, show sidebar + dashboard.
+  const renderActiveScreen = () => {
+    switch (activeTab) {
+      case 'home':
+        return <HomeScreen />;
+      case 'discover':
+        return <DiscoverScreen />;
+      case 'garden':
+        return <GardenScreen />;
+      case 'settings':
+        return <SettingsScreen />;
+      default:
+        return <HomeScreen />;
+    }
+  };
+
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-joy-gradient">
-        <AppSidebar />
-        <main className="flex-1 flex items-center justify-center">
-          <SidebarTrigger className="fixed top-4 left-4 z-30" />
-          <JoyDashboard />
-        </main>
-      </div>
-    </SidebarProvider>
+    <div className="min-h-screen w-full bg-joy-gradient">
+      {renderActiveScreen()}
+      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+    </div>
   );
 };
+
 export default Index;

@@ -9,20 +9,19 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { navigation as NavigationIcon, route as RouteIcon } from "lucide-react";
+import { Home, Settings } from "lucide-react";
 
 const items = [
   {
     title: "Dashboard",
     url: "#dashboard",
-    icon: NavigationIcon,
+    icon: Home,
   },
   {
-    title: "Onboarding",
-    url: "#onboarding",
-    icon: RouteIcon,
+    title: "Settings",
+    url: "#settings",
+    icon: Settings,
   },
-  // Add more items as needed when you add more pages
 ];
 
 export function AppSidebar() {
