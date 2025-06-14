@@ -1,5 +1,11 @@
 
-export default function AuthBackground() {
+import { ReactNode } from 'react';
+
+interface AuthBackgroundProps {
+  children: ReactNode;
+}
+
+export default function AuthBackground({ children }: AuthBackgroundProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-joy-white via-joy-light-blue/20 to-joy-white flex items-center justify-center p-6 relative overflow-hidden">
       {/* Subtle background decoration */}
@@ -8,6 +14,7 @@ export default function AuthBackground() {
         <div className="absolute bottom-20 right-20 w-40 h-40 bg-joy-coral/10 rounded-full blur-xl"></div>
         <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-joy-steel-blue/10 rounded-full blur-xl"></div>
       </div>
+      {children}
     </div>
   );
 }

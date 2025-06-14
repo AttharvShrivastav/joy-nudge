@@ -156,6 +156,7 @@ export default function HomeScreen() {
           <div
             className="joy-card p-6 text-center animate-fade-in"
             style={{ minHeight: 340 }}
+            data-tutorial="current-nudge"
           >
             <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
               {currentPrompt.nudge}

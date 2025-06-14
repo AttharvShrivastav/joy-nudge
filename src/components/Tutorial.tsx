@@ -1,9 +1,14 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowRight, ChevronRight } from 'lucide-react';
+import { X, ChevronRight } from 'lucide-react';
 import { useTutorial } from '@/hooks/useTutorial';
 import JoyIcon from './JoyIcon';
+
+interface TutorialProps {
+  onComplete: () => void;
+  onSkip: () => void;
+}
 
 interface TutorialStep {
   id: string;
@@ -47,24 +52,15 @@ const tutorialSteps: TutorialStep[] = [
   },
 ];
 
-export default function Tutorial() {
+export default function Tutorial({ onComplete, onSkip }: TutorialProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const { markTutorialComplete } = useTutorial();
 
   const handleNext = () => {
     if (currentStep < tutorialSteps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      handleComplete();
+      onComplete();
     }
-  };
-
-  const handleSkip = () => {
-    markTutorialComplete();
-  };
-
-  const handleComplete = () => {
-    markTutorialComplete();
   };
 
   const currentStepData = tutorialSteps[currentStep];
@@ -98,7 +94,7 @@ export default function Tutorial() {
     visible: { 
       scale: 1, 
       opacity: 1,
-      transition: { duration: 0.3, type: "spring" as const, stiffness: 300 }
+      transition: { duration: 0.3, type: "spring", stiffness: 300 }
     },
     exit: { 
       scale: 0.8, 
@@ -113,7 +109,7 @@ export default function Tutorial() {
       opacity: 1, 
       y: 0, 
       scale: 1,
-      transition: { duration: 0.4, type: "spring" as const, stiffness: 300, damping: 25 }
+      transition: { duration: 0.4, type: "spring", stiffness: 300, damping: 25 }
     },
     exit: { 
       opacity: 0, 
@@ -159,7 +155,7 @@ export default function Tutorial() {
           >
             {/* Close button */}
             <button
-              onClick={handleSkip}
+              onClick={onSkip}
               className="absolute top-4 right-4 text-joy-steel-blue hover:text-joy-dark-blue transition-colors"
             >
               <X size={20} />
@@ -207,7 +203,7 @@ export default function Tutorial() {
                 {/* Action buttons */}
                 <div className="flex gap-3">
                   <button
-                    onClick={handleSkip}
+                    onClick={onSkip}
                     className="flex-1 px-4 py-2 text-joy-steel-blue font-nunito font-medium hover:text-joy-dark-blue transition-colors"
                   >
                     Skip Tour
