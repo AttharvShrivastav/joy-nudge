@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import PixelAvatar from "./PixelAvatar";
 import { Flame } from "lucide-react";
 import InteractiveNudge from "./InteractiveNudge";
 import Celebration from "./Celebration";
@@ -67,9 +66,8 @@ export default function HomeScreen() {
   return (
     <div className="min-h-screen bg-joy-white pb-20 px-4">
       <div className="max-w-md mx-auto pt-8 relative">
-        {/* Top bar: avatar and streak */}
-        <div className="flex justify-between items-center mb-6">
-          <div />
+        {/* Top bar: greeting and streak */}
+        <div className="flex justify-center items-center mb-6">
           <div className="flex flex-col items-center">
             <span className="font-nunito text-lg text-joy-dark-blue">{getGreeting()}</span>
             <div className="flex items-center mt-1 gap-1 bg-joy-light-blue px-3 py-1 rounded-full shadow border-[1.5px] border-joy-steel-blue">
@@ -78,7 +76,6 @@ export default function HomeScreen() {
               <span className="font-lato text-joy-steel-blue text-sm ml-1">streak</span>
             </div>
           </div>
-          <PixelAvatar size="md" />
         </div>
         {/* MAIN NUDGE CARD */}
         <Celebration show={celebrating} />
