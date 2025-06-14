@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import PixelAvatar from "./PixelAvatar";
+import { Flame } from "lucide-react";
 import InteractiveNudge from "./InteractiveNudge";
 import Celebration from "./Celebration";
 
@@ -42,106 +43,79 @@ export default function HomeScreen() {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [isEngaged, setIsEngaged] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
-  const [streak, setStreak] = useState(7); // Example streak
-  
+  const [streak, setStreak] = useState(7); // example streak
+
   const currentPrompt = prompts[currentPromptIndex];
-  
-  const handleEngage = () => {
-    setIsEngaged(true);
-  };
-  
+
+  const handleEngage = () => setIsEngaged(true);
   const handleComplete = () => {
     setIsEngaged(false);
     setCelebrating(true);
-    
     setTimeout(() => {
       setCelebrating(false);
       setStreak(prev => prev + 1);
       setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
     }, 2000);
   };
-  
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good Morning!";
     if (hour < 17) return "Good Afternoon!";
     return "Good Evening!";
   };
-  
+
   return (
-    <div className="min-h-screen bg-joy-gradient pb-20 px-4">
-      <div className="max-w-md mx-auto pt-12">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-nunito font-bold text-joy-dark-blue mb-2">
-            {getGreeting()}
-          </h1>
-          <div className="flex items-center justify-center gap-2">
-            <div className="flex items-center gap-1 bg-joy-white/80 px-3 py-1 rounded-full">
-              <span className="text-joy-coral text-lg">🔥</span>
-              <span className="text-joy-dark-blue font-lato font-semibold">{streak} day streak</span>
+    <div className="min-h-screen bg-joy-white pb-20 px-4">
+      <div className="max-w-md mx-auto pt-8 relative">
+        {/* Top bar: avatar and streak */}
+        <div className="flex justify-between items-center mb-6">
+          <div />
+          <div className="flex flex-col items-center">
+            <span className="font-nunito text-lg text-joy-dark-blue">{getGreeting()}</span>
+            <div className="flex items-center mt-1 gap-1 bg-joy-light-blue px-3 py-1 rounded-full shadow border-[1.5px] border-joy-steel-blue">
+              <Flame className="text-joy-coral" size={22} />
+              <span className="font-nunito font-bold text-xl text-joy-dark-blue">{streak}</span>
+              <span className="font-lato text-joy-steel-blue text-sm ml-1">streak</span>
             </div>
           </div>
+          <PixelAvatar size={44} />
         </div>
-        
+        {/* MAIN NUDGE CARD */}
         <Celebration show={celebrating} />
-        
-        <AnimatePresence mode="wait">
-          {!celebrating && (
-            <motion.div
-              key={currentPrompt.id + (isEngaged ? '-engaged' : '-idle')}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {!isEngaged ? (
-                /* Nudge Card */
-                <div className="joy-card p-6 text-center">
-                  <div className="w-16 h-16 bg-joy-light-blue/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">✨</span>
-                  </div>
-                  
-                  <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-3">
-                    {currentPrompt.nudge}
-                  </h2>
-                  
-                  <p className="text-joy-steel-blue font-lato mb-6 leading-relaxed">
-                    {currentPrompt.description}
-                  </p>
-                  
-                  <button
-                    onClick={handleEngage}
-                    className="joy-button-primary w-full text-lg"
-                  >
-                    Engage
-                  </button>
-                </div>
-              ) : (
-                /* Interactive Element */
-                <InteractiveNudge 
-                  nudge={currentPrompt} 
-                  onComplete={handleComplete}
-                />
-              )}
-            </motion.div>
-          )}
-          
-          {celebrating && (
-            <motion.div
-              key="celebration"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="joy-card p-8 text-center"
-            >
-              <div className="text-4xl mb-4">🌟</div>
-              <div className="joy-script text-2xl">
-                {currentPrompt.affirmation}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {!celebrating && (
+          <div
+            className="joy-card p-6 text-center animate-fade-in"
+            style={{ minHeight: 340 }}
+          >
+            <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
+              {currentPrompt.nudge}
+            </h2>
+            <p className="text-joy-steel-blue font-lato mb-6 leading-relaxed">
+              {currentPrompt.description}
+            </p>
+            {!isEngaged ? (
+              <button
+                onClick={handleEngage}
+                className="joy-button-primary w-full text-lg mt-3"
+              >
+                Engage
+              </button>
+            ) : (
+              <InteractiveNudge
+                nudge={currentPrompt}
+                onComplete={handleComplete}
+              />
+            )}
+          </div>
+        )}
+        {celebrating && (
+          <div className="joy-card p-8 text-center animate-fade-in">
+            <div className="text-4xl mb-4">🌟</div>
+            <div className="joy-script text-2xl">
+              {currentPrompt.affirmation}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

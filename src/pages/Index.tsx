@@ -13,7 +13,7 @@ const Index = () => {
 
   if (!onboarded) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-joy-gradient transition-all duration-300">
+      <div className="min-h-screen w-full flex items-center justify-center bg-joy-white transition-all duration-300">
         <Onboarding onDone={() => setOnboarded(true)} />
       </div>
     );
@@ -35,7 +35,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-joy-gradient">
+    <div className="min-h-screen w-full bg-joy-white">
       {renderActiveScreen()}
       <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
