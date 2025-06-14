@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -167,6 +166,21 @@ export default function HomeScreen() {
     setIsEngaged(true);
   };
 
+  const handleSkip = () => {
+    playSound('button_press');
+    if (isFirstTime) {
+      localStorage.setItem('hasSeenBreathingNudge', 'true');
+      setIsFirstTime(false);
+    }
+    
+    // Remove current nudge from queue if it's a queued nudge
+    removeFromQueue(currentPrompt.id.toString());
+    
+    // Move to next nudge
+    setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
+    setIsEngaged(false);
+  };
+  
   const handleSkipBreathing = () => {
     playSound('button_press');
     if (isFirstTime) {
@@ -354,7 +368,7 @@ export default function HomeScreen() {
               isFirstTime={isFirstTime}
               onEngage={handleEngage}
               onComplete={handleComplete}
-              onSkip={handleSkipBreathing}
+              onSkip={handleSkip}
               onNudgeLike={handleNudgeLike}
               isLiked={isLiked}
             />

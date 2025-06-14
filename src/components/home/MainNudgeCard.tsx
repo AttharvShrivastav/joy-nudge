@@ -102,18 +102,16 @@ export default function MainNudgeCard({
                     Engage
                   </motion.button>
                   
-                  {isFirstTime && currentPrompt.type === 'breathe' && (
-                    <motion.button
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={onSkip}
-                      className="joy-button-secondary w-full text-sm"
-                    >
-                      Skip for now
-                    </motion.button>
-                  )}
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onSkip}
+                    className="joy-button-secondary w-full text-sm"
+                  >
+                    Skip for now
+                  </motion.button>
                 </div>
               ) : (
                 <motion.div
@@ -125,7 +123,7 @@ export default function MainNudgeCard({
                   <InteractiveNudge
                     nudge={currentPrompt}
                     onComplete={onComplete}
-                    onSkip={currentPrompt.type === 'breathe' ? onSkip : undefined}
+                    onSkip={onSkip}
                   />
                 </motion.div>
               )}

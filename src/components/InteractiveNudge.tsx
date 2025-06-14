@@ -41,13 +41,13 @@ export default function InteractiveNudge({ nudge, onComplete, onSkip }: Interact
     
     case "timer":
     case "timed":
-      return <TimerNudge nudge={nudge} onComplete={onComplete} />;
+      return <TimerNudge nudge={nudge} onComplete={onComplete} onSkip={onSkip} />;
     
     case "observational":
-      return <ObservationalNudge nudge={nudge} onComplete={onComplete} />;
+      return <ObservationalNudge nudge={nudge} onComplete={onComplete} onSkip={onSkip} />;
     
     case "reflective":
     default:
-      return <ReflectiveNudge nudge={nudge} onComplete={onComplete} />;
+      return <ReflectiveNudge nudge={nudge} onComplete={onComplete} onSkip={onSkip} />;
   }
 }
