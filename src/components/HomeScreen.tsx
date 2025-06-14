@@ -134,7 +134,7 @@ export default function HomeScreen() {
   return (
     <div className="min-h-screen bg-joy-white pb-20 px-4 relative">
       <div className="max-w-md mx-auto pt-8 relative">
-        {/* Pixelated Avatar in top right - Enhanced visibility */}
+        {/* Pixelated Avatar in top right */}
         <div className="absolute top-0 right-0 z-30">
           <PixelAvatar size="md" />
         </div>
@@ -213,7 +213,7 @@ export default function HomeScreen() {
         </div>
       </div>
 
-      {/* Tutorial Modal - Positioned to not hide nudge */}
+      {/* Tutorial Modal */}
       {shouldShowTutorial && (
         <div className="fixed inset-0 z-40">
           <Tutorial

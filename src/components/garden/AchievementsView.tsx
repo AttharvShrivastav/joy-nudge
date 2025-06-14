@@ -1,14 +1,18 @@
 
 import { Trophy } from "lucide-react";
-
-const achievements = [
-  { id: 1, name: "First Nudge", description: "Complete your first joy nudge", earned: true },
-  { id: 2, name: "Week Warrior", description: "7-day streak", earned: true },
-  { id: 3, name: "Garden Starter", description: "Unlock 3 plants", earned: true },
-  { id: 4, name: "Mindful Master", description: "Complete 50 mindfulness nudges", earned: false },
-];
+import { useAchievements } from "@/hooks/useAchievements";
 
 export default function AchievementsView() {
+  const { achievements, loading } = useAchievements();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-joy-steel-blue font-nunito">Loading achievements...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {achievements.map((achievement) => (
@@ -22,6 +26,9 @@ export default function AchievementsView() {
             <div>
               <div className="font-nunito font-semibold text-joy-dark-blue">{achievement.name}</div>
               <div className="text-sm text-joy-steel-blue font-lato">{achievement.description}</div>
+              {achievement.earned && (
+                <div className="text-xs text-joy-coral font-lato mt-1">✓ Earned</div>
+              )}
             </div>
           </div>
         </div>

@@ -8,13 +8,11 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -25,7 +23,6 @@ serve(async (req) => {
       }
     )
 
-    // Get the user from the request
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
     if (userError || !user) {
       throw new Error('Unauthorized')
@@ -35,44 +32,52 @@ serve(async (req) => {
 
     const { context, category = 'mindfulness', mood } = await req.json()
 
-    // Call Google Gemini API with enhanced prompt for truly unique content
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiApiKey) {
       throw new Error('Gemini API key not configured')
     }
 
-    // Generate a random seed to ensure uniqueness
+    // Generate multiple random elements for uniqueness
     const randomSeed = Math.random().toString(36).substring(2, 15)
     const timestamp = new Date().getTime()
+    const userSeed = user.id.slice(-8)
+    const contextHash = context ? context.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0) : 0
 
-    const enhancedPrompt = `Create a completely unique, never-before-seen mindful nudge for someone seeking joy and wellbeing. 
+    const uniquePrompt = `CREATE A COMPLETELY ORIGINAL, NEVER-BEFORE-SEEN MINDFUL MICRO-PRACTICE
 
-    CREATIVITY REQUIREMENTS:
-    - This must be 100% original and creative, not based on common mindfulness practices
-    - Think outside the box and combine unexpected elements
-    - Make it delightfully surprising yet achievable
-    - Focus on micro-moments of joy and discovery
+    STRICT UNIQUENESS REQUIREMENTS:
+    - This MUST be 100% original and creative - avoid all common mindfulness practices
+    - Combine unexpected elements from different domains
+    - Create something delightfully surprising yet achievable in under 5 minutes
+    - Think beyond breathing, meditation, gratitude - be genuinely inventive
     
-    Context: ${context || 'general wellbeing'}
-    Category preference: ${category}
-    User mood: ${mood || 'neutral'}
-    Uniqueness seed: ${randomSeed}
+    CREATIVE DOMAINS TO UNEXPECTEDLY COMBINE:
+    - Sensory micro-explorations (temperature, texture, sound, taste, light)
+    - Playful body awareness (finger choreography, facial expressions, posture experiments)
+    - Environmental connection (conversations with objects, light observations, air movement)
+    - Creative expression (drawing with feet, humming to colors, storytelling to shadows)
+    - Micro-adventures (finding hidden patterns, creating tiny rituals, inventing games)
+    - Gentle self-discovery (body part appreciation, emotion coloring, memory textures)
     
-    CREATIVE INSPIRATION AREAS (pick unexpected combinations):
-    - Sensory exploration (textures, sounds, scents, temperatures)
-    - Movement and body awareness (finger dances, silly stretches)
-    - Connection with environment (talking to plants, cloud conversations)
-    - Playful creativity (drawing with non-dominant hand, humming to objects)
-    - Micro-adventures (finding hidden details, creating tiny stories)
-    - Gentle self-care rituals (making faces in mirror, thanking body parts)
+    Context: ${context || 'general wellbeing and joy'}
+    Preferred mood: ${mood || 'curious and open'}
+    Unique seeds: ${randomSeed}_${timestamp}_${userSeed}_${contextHash}
     
-    Please respond with a JSON object containing:
-    - title: A whimsical, unique title (max 50 characters) that sparks curiosity
-    - description: A warm, playful description (max 180 characters) explaining the unique activity
-    - category: One of: mindfulness, gratitude, physical, joy, self-love, creativity
-    - interactive_type: Choose the most fitting: BREATHING, TIMED, OBSERVATIONAL, REFLECTIVE, NONE
+    RESPONSE FORMAT (strict JSON only):
+    {
+      "title": "Captivating unique title (max 40 chars) - make it curious and inviting",
+      "description": "Warm, clear description (max 160 chars) of this unique micro-practice",
+      "category": "mindfulness|gratitude|physical|joy|self-love|creativity",
+      "interactive_type": "BREATHING|TIMED|OBSERVATIONAL|REFLECTIVE|NONE"
+    }
     
-    Make it feel like a delightful surprise gift - something they've never tried before that brings a smile to their face.`
+    EXAMPLES OF THE CREATIVE THINKING NEEDED:
+    - "Create a 2-minute texture treasure hunt using only your fingertips"
+    - "Have a silent conversation with three different light sources"
+    - "Compose a tiny song by humming to each room you enter"
+    - "Draw the shape of your current emotion using only your toes"
+    
+    Make it feel like discovering a hidden gem of joy and wonder!`
 
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`,
@@ -84,11 +89,11 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: enhancedPrompt
+              text: uniquePrompt
             }]
           }],
           generationConfig: {
-            temperature: 0.9, // High creativity
+            temperature: 1.0, // Maximum creativity
             topP: 0.95,
             topK: 40,
             maxOutputTokens: 1024,
@@ -106,13 +111,11 @@ serve(async (req) => {
     const geminiData = await geminiResponse.json()
     console.log('Gemini response:', geminiData)
 
-    // Extract the generated content
     const generatedText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
     if (!generatedText) {
       throw new Error('No content generated from Gemini')
     }
 
-    // Parse the JSON response from Gemini
     let nudgeData
     try {
       const jsonMatch = generatedText.match(/\{[\s\S]*\}/)
@@ -123,38 +126,42 @@ serve(async (req) => {
       }
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', generatedText)
-      // Enhanced fallback nudges with more creativity
-      const creativeFallbacks = [
+      // Unique fallback nudges
+      const uniqueFallbacks = [
         {
-          title: "Dance with your shadow",
-          description: "Find a light source and have a 2-minute silly dance party with your shadow. Make it laugh!",
-          category: "joy",
-          interactive_type: "TIMED"
-        },
-        {
-          title: "Whisper to something small",
-          description: "Find a tiny object and whisper a kind secret or compliment to it. Notice how it feels to share gentleness.",
+          title: "Whisper compliments to your reflection",
+          description: "Look in any reflective surface and whisper three kind words to yourself. Notice how it feels.",
           category: "self-love",
           interactive_type: "REFLECTIVE"
         },
         {
-          title: "Breathe colors",
-          description: "Look around and 'breathe in' a color you see. Imagine that color filling you with its unique energy.",
+          title: "Temperature detective game",
+          description: "Find 5 different temperatures around you using only your fingertips. Notice the contrast.",
           category: "mindfulness",
-          interactive_type: "BREATHING"
+          interactive_type: "OBSERVATIONAL"
+        },
+        {
+          title: "Create a micro dance for your mood",
+          description: "Let your current feeling move through your body for 90 seconds. No rules, just feeling.",
+          category: "creativity",
+          interactive_type: "TIMED"
         }
       ]
-      nudgeData = creativeFallbacks[Math.floor(Math.random() * creativeFallbacks.length)]
+      nudgeData = uniqueFallbacks[Math.floor(Math.random() * uniqueFallbacks.length)]
     }
 
-    // Insert the new nudge into the database
+    // Validate required fields
+    if (!nudgeData.title || !nudgeData.description || !nudgeData.category) {
+      throw new Error('Generated nudge missing required fields')
+    }
+
     const { data: newNudge, error: insertError } = await supabaseClient
       .from('nudges')
       .insert({
         title: nudgeData.title,
         description: nudgeData.description,
         category: nudgeData.category,
-        interactive_type: nudgeData.interactive_type,
+        interactive_type: nudgeData.interactive_type || 'NONE',
         is_ai_generated: true
       })
       .select()
@@ -171,7 +178,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         nudge: newNudge,
-        message: 'Fresh nudge generated just for you!'
+        message: 'Fresh, unique nudge created just for you!'
       }),
       { 
         headers: { 
