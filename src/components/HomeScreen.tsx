@@ -1,13 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, RefreshCw, Target, Flame } from "lucide-react";
+import { Sparkles, RefreshCw, Target, Flame, Play, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
 import { useStreakData } from "@/hooks/useStreakData";
 import InteractiveNudge from "./InteractiveNudge";
-import AnimatedButton from "./AnimatedButton";
 import LikeButton from "./LikeButton";
 import FocusMode from "./FocusMode";
 import { fallbackNudges } from "@/data/fallbackNudges";
@@ -184,8 +182,18 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
     );
   }
 
+  const currentTime = new Date().getHours();
+  const greeting = currentTime < 12 ? "Good Morning" : currentTime < 17 ? "Good Afternoon" : "Good Evening";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-joy-white to-joy-light-blue/10">
+    <div className="min-h-screen bg-gradient-to-br from-joy-white via-joy-light-blue/5 to-joy-white relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-4 w-16 h-16 bg-joy-light-blue/10 rounded-full blur-xl"></div>
+        <div className="absolute top-40 right-8 w-12 h-12 bg-joy-coral/10 rounded-full blur-lg"></div>
+        <div className="absolute bottom-40 left-8 w-20 h-20 bg-joy-steel-blue/5 rounded-full blur-2xl"></div>
+      </div>
+
       <AnimatePresence mode="wait">
         {showSuggestions ? (
           <motion.div
@@ -194,7 +202,7 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="p-3 pt-12 pb-20"
+            className="relative z-10 p-4 pt-16 pb-24"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -283,13 +291,14 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="p-3 pt-12 pb-20"
+            className="relative z-10 p-4 pt-16 pb-24"
           >
+            {/* Header Section */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-center mb-4"
+              className="text-center mb-8"
             >
               <motion.div
                 animate={{ 
@@ -297,115 +306,193 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                   rotate: [0, 5, -5, 0] 
                 }}
                 transition={{ 
-                  duration: 2, 
+                  duration: 3, 
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="text-3xl mb-2"
+                className="text-4xl mb-3"
               >
-                🌟
+                🌅
               </motion.div>
-              <h1 className="text-lg font-fredoka font-bold text-joy-dark-blue mb-1">
-                Your Joy Nudge
+              <h1 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
+                {greeting}, {user?.user_metadata?.full_name?.split(' ')[0] || 'Friend'}!
               </h1>
-              <p className="text-joy-steel-blue font-lato text-xs">
-                {currentMood ? `Perfect for when you're feeling ${currentMood}` : 'A moment of mindfulness, just for you'}
+              <p className="text-joy-steel-blue font-lato text-sm">
+                {currentMood ? `Perfect for when you're feeling ${currentMood}` : 'Ready for your moment of joy?'}
               </p>
             </motion.div>
 
-            {/* Streak & Focus Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="grid grid-cols-2 gap-2 mb-4"
-            >
+            {/* Garden-Style Central Layout */}
+            <div className="relative min-h-[400px] bg-gradient-to-b from-joy-white to-joy-light-blue/10 rounded-3xl p-6 mb-6 border border-joy-light-blue/20">
+              
+              {/* Streak Visualization - Top Left */}
               <motion.div
-                whileHover={{ scale: 1.02 }}
-                className="bg-joy-white rounded-lg p-3 shadow-lg border border-joy-light-blue/20"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="absolute top-4 left-4"
               >
-                <div className="flex items-center space-x-2 mb-1">
-                  <Flame className="w-3 h-3 text-joy-coral" />
-                  <span className="text-xs font-fredoka font-semibold text-joy-dark-blue">Streak</span>
+                <div className="flex items-center space-x-2 bg-joy-white/80 backdrop-blur-sm rounded-full px-3 py-2 border border-joy-light-blue/30">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Flame className="w-4 h-4 text-joy-coral" />
+                  </motion.div>
+                  <div>
+                    <div className="text-lg font-nunito font-bold text-joy-coral leading-none">
+                      {streakData?.current_streak_days || 0}
+                    </div>
+                    <div className="text-xs text-joy-steel-blue font-lato">streak</div>
+                  </div>
                 </div>
-                <div className="text-xl font-fredoka font-bold text-joy-coral">
-                  {streakData?.current_streak_days || 0}
-                </div>
-                <div className="text-xs text-joy-steel-blue">days</div>
               </motion.div>
 
+              {/* Focus Button - Top Right */}
               <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowFocus(true)}
-                className="bg-joy-white rounded-lg p-3 shadow-lg border border-joy-light-blue/20 cursor-pointer"
-              >
-                <div className="flex items-center space-x-2 mb-1">
-                  <Target className="w-3 h-3 text-joy-steel-blue" />
-                  <span className="text-xs font-fredoka font-semibold text-joy-dark-blue">Focus</span>
-                </div>
-                <div className="text-lg font-fredoka font-bold text-joy-steel-blue">
-                  Start
-                </div>
-                <div className="text-xs text-joy-steel-blue">session</div>
-              </motion.div>
-            </motion.div>
-
-            {currentNudge && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-joy-white rounded-lg p-4 shadow-xl border border-joy-light-blue/20 mb-4"
+                className="absolute top-4 right-4"
               >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <h2 className="text-base font-fredoka font-bold text-joy-dark-blue mb-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowFocus(true)}
+                  className="flex items-center space-x-2 bg-joy-steel-blue text-joy-white rounded-full px-4 py-2 font-nunito font-semibold text-sm shadow-lg"
+                >
+                  <Target className="w-4 h-4" />
+                  <span>Focus</span>
+                </motion.button>
+              </motion.div>
+
+              {/* Central Nudge Display */}
+              {currentNudge && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                  className="absolute inset-x-6 top-1/2 transform -translate-y-1/2"
+                >
+                  <div className="text-center space-y-4">
+                    {/* Nudge Icon/Visual */}
+                    <motion.div
+                      animate={{ 
+                        y: [0, -10, 0],
+                        scale: [1, 1.05, 1]
+                      }}
+                      transition={{ 
+                        duration: 4, 
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="text-6xl mb-4"
+                    >
+                      🌸
+                    </motion.div>
+
+                    {/* Nudge Title */}
+                    <h2 className="text-xl font-nunito font-bold text-joy-dark-blue leading-tight">
                       {currentNudge.title}
                     </h2>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-xs bg-joy-sage/20 text-joy-sage px-2 py-1 rounded-full">
+
+                    {/* Nudge Description */}
+                    <p className="text-joy-steel-blue font-lato text-sm leading-relaxed max-w-xs mx-auto">
+                      {currentNudge.description}
+                    </p>
+
+                    {/* Category & AI Badge */}
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="text-xs bg-joy-sage/20 text-joy-sage px-3 py-1 rounded-full font-lato">
                         {currentNudge.category}
                       </span>
                       {currentNudge.is_ai_generated && (
-                        <span className="text-xs bg-joy-coral/20 text-joy-coral px-2 py-1 rounded-full flex items-center">
-                          <Sparkles size={8} className="mr-1" />
-                          AI Generated
+                        <span className="text-xs bg-joy-coral/20 text-joy-coral px-3 py-1 rounded-full flex items-center font-lato">
+                          <Sparkles size={10} className="mr-1" />
+                          AI
                         </span>
                       )}
                     </div>
                   </div>
-                  <LikeButton nudgeId={currentNudge.id} nudgeData={currentNudge} />
-                </div>
-                
-                <p className="text-joy-steel-blue font-lato mb-4 leading-relaxed text-sm">
-                  {currentNudge.description}
-                </p>
+                </motion.div>
+              )}
 
-                <div className="space-y-2">
-                  <AnimatedButton
-                    onClick={handleTryNow}
-                    text="Try Now ✨"
-                  />
+              {/* Like Button - Bottom Right of Nudge Area */}
+              {currentNudge && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.7, type: "spring" }}
+                  className="absolute bottom-4 right-4"
+                >
+                  <LikeButton nudgeId={currentNudge.id} nudgeData={currentNudge} size="lg" />
+                </motion.div>
+              )}
 
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleRefreshNudge}
-                    disabled={isGenerating}
-                    className="w-full bg-joy-light-blue/10 text-joy-dark-blue py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 text-sm"
-                  >
-                    <motion.div
-                      animate={isGenerating ? { rotate: 360 } : {}}
-                      transition={{ duration: 1, repeat: isGenerating ? Infinity : 0 }}
-                    >
-                      <RefreshCw size={14} />
-                    </motion.div>
-                    <span>{isGenerating ? 'Generating...' : 'Get New Nudge'}</span>
-                  </motion.button>
-                </div>
+              {/* Decorative Elements */}
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 6, repeat: Infinity }}
+                className="absolute bottom-6 left-6 text-2xl opacity-30"
+              >
+                🦋
               </motion.div>
-            )}
+              
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 4, repeat: Infinity, delay: 2 }}
+                className="absolute top-16 right-16 text-xl opacity-20"
+              >
+                🍃
+              </motion.div>
+            </div>
+
+            {/* Action Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="space-y-3"
+            >
+              {/* Primary Action Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleTryNow}
+                className="w-full bg-joy-coral text-joy-white py-4 rounded-2xl font-nunito font-bold text-lg shadow-xl flex items-center justify-center space-x-3 relative overflow-hidden"
+              >
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                >
+                  <Play className="w-5 h-5" />
+                </motion.div>
+                <span>Begin Your Journey</span>
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  ✨
+                </motion.div>
+              </motion.button>
+
+              {/* Secondary Action Button */}
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={handleRefreshNudge}
+                disabled={isGenerating}
+                className="w-full bg-joy-white text-joy-dark-blue py-3 rounded-xl font-nunito font-semibold border-2 border-joy-light-blue/30 flex items-center justify-center space-x-2 disabled:opacity-50"
+              >
+                <motion.div
+                  animate={isGenerating ? { rotate: 360 } : {}}
+                  transition={{ duration: 1, repeat: isGenerating ? Infinity : 0 }}
+                >
+                  <RefreshCw size={16} />
+                </motion.div>
+                <span>{isGenerating ? 'Generating...' : 'Get New Nudge'}</span>
+              </motion.button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
