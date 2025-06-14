@@ -78,7 +78,7 @@ export default function HomeScreen() {
               <span className="font-lato text-joy-steel-blue text-sm ml-1">streak</span>
             </div>
           </div>
-          <PixelAvatar size={44} />
+          <PixelAvatar size="md" />
         </div>
         {/* MAIN NUDGE CARD */}
         <Celebration show={celebrating} />

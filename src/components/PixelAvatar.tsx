@@ -23,9 +23,7 @@ export default function PixelAvatar({ onClick, size = "md" }: PixelAvatarProps) 
       onClick={onClick}
       className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-joy-coral to-joy-steel-blue flex items-center justify-center hover:scale-105 transition-transform pixelated-border`}
       style={{
-        imageRendering: 'pixelated',
-        imageRendering: '-moz-crisp-edges',
-        imageRendering: 'crisp-edges'
+        imageRendering: 'pixelated'
       }}
     >
       <User size={size === "sm" ? 16 : size === "md" ? 20 : 24} className="text-white" />
