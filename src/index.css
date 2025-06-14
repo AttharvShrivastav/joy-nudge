@@ -43,7 +43,8 @@
 /* Core UI Components */
 @layer components {
   .joy-card {
-    @apply bg-joy-white/93 rounded-2xl shadow-joy-card border border-joy-light-blue/30 backdrop-blur-sm;
+    /* Removed bg-joy-white/93 due to build error. */
+    @apply bg-joy-white rounded-2xl shadow-joy-card border border-joy-light-blue/30 backdrop-blur-sm;
   }
   .joy-button-primary {
     @apply bg-joy-steel-blue text-joy-white font-nunito font-semibold px-6 py-3 rounded-xl shadow-joy transition-all duration-200 hover:bg-joy-dark-blue hover:shadow-lg active:scale-95;
@@ -58,3 +59,4 @@
     @apply text-joy-coral;
   }
 }
+
