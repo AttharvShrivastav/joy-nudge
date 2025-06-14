@@ -84,6 +84,34 @@ export default function HomeScreen() {
   const { gardenData } = useGardenData();
   const { toast } = useToast();
 
+  // Sound effect function
+  const playSound = (type: string) => {
+    try {
+      const audio = new Audio();
+      switch (type) {
+        case 'button_press':
+          audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+        case 'celebration':
+          audio.src = 'data:audio/wav;base64,UklGRpAGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YWwGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+        case 'engage':
+          audio.src = 'data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YUAGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+        case 'like':
+          audio.src = 'data:audio/wav;base64,UklGRhAGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YeQFAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+        case 'mood_select':
+          audio.src = 'data:audio/wav;base64,UklGRjQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+      }
+      audio.volume = 0.3;
+      audio.play().catch(() => {}); // Silently fail if audio can't play
+    } catch (error) {
+      // Silently handle audio errors
+    }
+  };
+
   // Check for queued nudges and use them instead of default prompts
   useEffect(() => {
     const queuedNudge = getNextQueuedNudge();
@@ -126,6 +154,7 @@ export default function HomeScreen() {
   }, [user, tutorialLoading, gardenData.todaysMood]);
 
   const handleMoodSelect = async (mood: string) => {
+    playSound('mood_select');
     setCurrentMood(mood);
     setShowMoodSelector(false);
     localStorage.setItem('lastMoodDate', new Date().toDateString());
@@ -151,10 +180,12 @@ export default function HomeScreen() {
   };
 
   const handleEngage = () => {
+    playSound('engage');
     setIsEngaged(true);
   };
   
   const handleComplete = async () => {
+    playSound('celebration');
     setIsEngaged(false);
     setCelebrating(true);
     
@@ -229,6 +260,7 @@ export default function HomeScreen() {
   };
 
   const handleNudgeLike = (nudge: any) => {
+    playSound('like');
     toggleLike(nudge.id.toString(), nudge);
   };
 
@@ -288,22 +320,45 @@ export default function HomeScreen() {
           )}
         </AnimatePresence>
 
-        {/* Pixelated Avatar in top right */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="absolute top-0 right-0 z-30"
-        >
-          <PixelAvatar size="md" />
-        </motion.div>
-        
-        {/* Top bar: greeting and enhanced streak */}
+        {/* Header with Logo and Avatar */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex justify-center items-center mb-6 pt-2"
+          className="flex justify-between items-start mb-6"
+        >
+          {/* Logo */}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="flex items-center gap-2"
+          >
+            <img 
+              src="/lovable-uploads/424186e2-de89-4a2a-a690-1d1d0f47bbe8.png" 
+              alt="Joy Nudge" 
+              className="w-8 h-8 rounded-full"
+            />
+            <span className="font-nunito text-lg font-semibold text-joy-dark-blue">
+              Joy Nudge
+            </span>
+          </motion.div>
+
+          {/* Pixelated Avatar */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="z-30"
+          >
+            <PixelAvatar size="md" />
+          </motion.div>
+        </motion.div>
+        
+        {/* Greeting and enhanced streak */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex justify-center items-center mb-6"
         >
           <div className="flex flex-col items-center">
             <span className="font-nunito text-xl font-semibold text-joy-dark-blue mb-1">
@@ -326,13 +381,16 @@ export default function HomeScreen() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
           className="mb-6"
         >
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setShowFocusMode(true)}
+            onClick={() => {
+              playSound('button_press');
+              setShowFocusMode(true);
+            }}
             className="w-full bg-gradient-to-r from-joy-steel-blue to-joy-dark-blue text-white rounded-xl p-4 flex items-center justify-center gap-3 hover:from-joy-dark-blue hover:to-joy-steel-blue transition-all duration-200 shadow-lg"
           >
             <Focus className="w-6 h-6" />
@@ -347,7 +405,7 @@ export default function HomeScreen() {
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.4 }}
           className="relative z-10"
         >
           <Celebration show={celebrating} />

@@ -6,7 +6,9 @@ import { Button } from "./ui/button";
 import { Switch } from "./ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
+import { useNudgeLikes } from "@/hooks/useNudgeLikes";
 import InteractiveNudge from "./InteractiveNudge";
+import { motion } from "framer-motion";
 
 const nudgeCategories = [
   { id: "mindfulness", name: "Mindfulness", icon: "🧘", color: "bg-mint" },
@@ -61,8 +63,32 @@ export default function DiscoverScreen() {
   const [generatingAi, setGeneratingAi] = useState(false);
   const [aiGeneratedNudges, setAiGeneratedNudges] = useState<any[]>([]);
   const { toast } = useToast();
+  const { toggleLike, isLiked } = useNudgeLikes();
+
+  // Sound effect function
+  const playSound = (type: string) => {
+    try {
+      const audio = new Audio();
+      switch (type) {
+        case 'button_press':
+          audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+        case 'like':
+          audio.src = 'data:audio/wav;base64,UklGRhAGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YeQFAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+        case 'generate':
+          audio.src = 'data:audio/wav;base64,UklGRiQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YfQFAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+      }
+      audio.volume = 0.3;
+      audio.play().catch(() => {}); // Silently fail if audio can't play
+    } catch (error) {
+      // Silently handle audio errors
+    }
+  };
 
   const generateAiNudges = async () => {
+    playSound('generate');
     setGeneratingAi(true);
     try {
       console.log('Calling generate-nudge function...');
@@ -123,6 +149,7 @@ export default function DiscoverScreen() {
   };
 
   const handleTryNow = (nudge: any) => {
+    playSound('button_press');
     // Convert nudge to interactive format
     const interactiveNudge = {
       id: nudge.id,
@@ -138,11 +165,17 @@ export default function DiscoverScreen() {
   };
 
   const handleNudgeComplete = () => {
+    playSound('completion');
     setTryingNudge(null);
     toast({
       title: "Nudge Complete! 🌟",
       description: "Great job! You've added a moment of joy to your day.",
     });
+  };
+
+  const handleNudgeLike = (nudge: any) => {
+    playSound('like');
+    toggleLike(nudge.id.toString(), nudge);
   };
 
   const allNudges = [...featuredNudges, ...aiGeneratedNudges];
@@ -299,7 +332,10 @@ export default function DiscoverScreen() {
             {nudgeCategories.map((category) => (
               <button
                 key={category.id}
-                onClick={() => setSelectedCategory(category.id === selectedCategory ? null : category.id)}
+                onClick={() => {
+                  playSound('button_press');
+                  setSelectedCategory(category.id === selectedCategory ? null : category.id);
+                }}
                 className={`joy-card p-4 text-center transition-all duration-200 ${
                   selectedCategory === category.id ? 'ring-2 ring-joy-coral' : ''
                 }`}
@@ -357,7 +393,18 @@ export default function DiscoverScreen() {
                         <Zap className="text-joy-coral" size={16} />
                       )}
                     </div>
-                    <Heart className="text-joy-steel-blue" size={20} />
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleNudgeLike(nudge)}
+                      className={`p-1 rounded-full transition-colors ${
+                        isLiked(nudge.id?.toString()) 
+                          ? 'text-red-500' 
+                          : 'text-joy-steel-blue hover:text-red-400'
+                      }`}
+                    >
+                      <Heart size={20} fill={isLiked(nudge.id?.toString()) ? 'currentColor' : 'none'} />
+                    </motion.button>
                   </div>
                   <p className="text-joy-steel-blue font-lato text-sm mb-3">{nudge.description}</p>
                   <div className="flex justify-between items-center">
@@ -379,7 +426,10 @@ export default function DiscoverScreen() {
                         Try Now
                       </button>
                       <button 
-                        onClick={() => setSelectedNudge(nudge)}
+                        onClick={() => {
+                          playSound('button_press');
+                          setSelectedNudge(nudge);
+                        }}
                         className="joy-button-secondary px-3 py-1 text-sm"
                       >
                         Details

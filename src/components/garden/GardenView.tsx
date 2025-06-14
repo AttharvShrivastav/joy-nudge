@@ -2,14 +2,16 @@
 import { Leaf, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
-const plants = [
-  { id: 1, name: "Mindfulness Moss", emoji: "🌱", unlocked: true, progress: 100, x: 20, y: 60, level: 3 },
-  { id: 2, name: "Gratitude Grass", emoji: "🌿", unlocked: true, progress: 100, x: 40, y: 80, level: 2 },
-  { id: 3, name: "Joy Jasmine", emoji: "🌸", unlocked: true, progress: 85, x: 70, y: 50, level: 2 },
-  { id: 4, name: "Calm Chrysanthemum", emoji: "🌼", unlocked: true, progress: 60, x: 30, y: 30, level: 1 },
-  { id: 5, name: "Energy Eucalyptus", emoji: "🌳", unlocked: false, progress: 0, x: 80, y: 75, level: 0 },
-  { id: 6, name: "Peace Peony", emoji: "🌺", unlocked: false, progress: 0, x: 60, y: 20, level: 0 },
-];
+interface Plant {
+  id: number;
+  name: string;
+  emoji: string;
+  unlocked: boolean;
+  progress: number;
+  x: number;
+  y: number;
+  level: number;
+}
 
 interface GardenViewProps {
   totalNudges: number;
@@ -17,6 +19,35 @@ interface GardenViewProps {
 }
 
 export default function GardenView({ totalNudges, plantsUnlocked }: GardenViewProps) {
+  // Dynamic plants based on progress
+  const generatePlants = (): Plant[] => {
+    const baseShapes = [
+      { name: "Mindfulness Moss", emoji: "🌱", x: 20, y: 60 },
+      { name: "Gratitude Grass", emoji: "🌿", x: 40, y: 80 },
+      { name: "Joy Jasmine", emoji: "🌸", x: 70, y: 50 },
+      { name: "Calm Chrysanthemum", emoji: "🌼", x: 30, y: 30 },
+      { name: "Energy Eucalyptus", emoji: "🌳", x: 80, y: 75 },
+      { name: "Peace Peony", emoji: "🌺", x: 60, y: 20 },
+    ];
+
+    return baseShapes.map((plant, index) => {
+      const isUnlocked = index < plantsUnlocked;
+      const completionsForThisPlant = Math.max(0, totalNudges - (index * 3));
+      const progress = isUnlocked ? Math.min(100, (completionsForThisPlant / 3) * 100) : 0;
+      const level = isUnlocked ? Math.floor(completionsForThisPlant / 5) + 1 : 0;
+
+      return {
+        id: index + 1,
+        ...plant,
+        unlocked: isUnlocked,
+        progress,
+        level: Math.min(level, 5) // Max level 5
+      };
+    });
+  };
+
+  const plants = generatePlants();
+
   return (
     <div className="space-y-6">
       {/* Enhanced garden header with celebration */}
@@ -185,6 +216,11 @@ export default function GardenView({ totalNudges, plantsUnlocked }: GardenViewPr
                   animate={{ width: `${plant.progress}%` }}
                   transition={{ duration: 1, delay: 0.2 }}
                 />
+              </div>
+            )}
+            {!plant.unlocked && (
+              <div className="text-xs text-joy-steel-blue/60">
+                Complete {(plant.id - 1) * 3 + 1} more nudges
               </div>
             )}
           </motion.div>

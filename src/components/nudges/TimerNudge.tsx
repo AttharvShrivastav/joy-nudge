@@ -12,9 +12,37 @@ interface TimerNudgeProps {
 
 export default function TimerNudge({ nudge, onComplete }: TimerNudgeProps) {
   const [timeLeft, setTimeLeft] = useState(nudge.duration || 60);
+  const [hasStarted, setHasStarted] = useState(false);
+  
+  // Play timer sounds
+  const playTimerSound = (type: string) => {
+    try {
+      const audio = new Audio();
+      switch (type) {
+        case 'start':
+          audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+        case 'end':
+          audio.src = 'data:audio/wav;base64,UklGRpAGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YWwGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+      }
+      audio.volume = 0.3;
+      audio.play().catch(() => {}); // Silently fail if audio can't play
+    } catch (error) {
+      // Silently handle audio errors
+    }
+  };
+
+  useEffect(() => {
+    if (!hasStarted) {
+      setHasStarted(true);
+      playTimerSound('start');
+    }
+  }, []);
   
   useEffect(() => {
     if (timeLeft <= 0) {
+      playTimerSound('end');
       onComplete();
       return;
     }
@@ -53,6 +81,10 @@ export default function TimerNudge({ nudge, onComplete }: TimerNudgeProps) {
       <p className="text-joy-steel-blue font-lato">
         Keep going, you're doing great!
       </p>
+      
+      <div className="text-sm text-joy-steel-blue/70 font-lato mt-2">
+        🔊 Listen for the gentle completion chime
+      </div>
     </div>
   );
 }

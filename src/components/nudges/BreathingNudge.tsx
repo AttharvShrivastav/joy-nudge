@@ -19,9 +19,39 @@ export default function BreathingNudge({ nudge, onComplete }: BreathingNudgeProp
     { name: "Exhale", duration: 4000, scale: 1.0 }
   ];
   const totalCycles = nudge.duration || 3;
+
+  // Sound effect function for breathing
+  const playBreathingSound = (phase: string) => {
+    try {
+      const audio = new Audio();
+      switch (phase) {
+        case 'Inhale':
+          // Ascending tone for inhale
+          audio.src = 'data:audio/wav;base64,UklGRhwEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YfgDAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+        case 'Exhale':
+          // Descending tone for exhale
+          audio.src = 'data:audio/wav;base64,UklGRiAEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YfwDAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+        case 'Hold':
+          // Neutral tone for hold
+          audio.src = 'data:audio/wav;base64,UklGRhgEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YfQDAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj';
+          break;
+      }
+      audio.volume = 0.2;
+      audio.play().catch(() => {}); // Silently fail if audio can't play
+    } catch (error) {
+      // Silently handle audio errors
+    }
+  };
   
   useEffect(() => {
     const currentPhaseDuration = phases[currentPhase % 3].duration;
+    const phaseData = phases[currentPhase % 3];
+    
+    // Play sound for current phase
+    playBreathingSound(phaseData.name);
+    
     const timer = setTimeout(() => {
       if (Math.floor(currentPhase / 3) >= totalCycles) {
         onComplete();
@@ -63,6 +93,10 @@ export default function BreathingNudge({ nudge, onComplete }: BreathingNudgeProp
       <p className="text-joy-steel-blue font-lato mb-4">
         Cycle {currentCycle} of {totalCycles}
       </p>
+      
+      <div className="text-sm text-joy-steel-blue/70 font-lato">
+        Follow the gentle sounds and visual guide
+      </div>
     </div>
   );
 }

@@ -22,7 +22,26 @@ export default function LoadingScreen({ isLoading }: LoadingScreenProps) {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <div className="text-6xl mb-4">🌟</div>
+          {/* Logo */}
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              rotate: [0, 5, -5, 0]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="mb-6"
+          >
+            <img 
+              src="/lovable-uploads/424186e2-de89-4a2a-a690-1d1d0f47bbe8.png" 
+              alt="Joy Nudge Logo" 
+              className="w-24 h-24 mx-auto rounded-full shadow-lg"
+            />
+          </motion.div>
+          
           <h1 className="text-3xl font-nunito font-bold text-joy-dark-blue mb-2">
             Joy Nudge
           </h1>
