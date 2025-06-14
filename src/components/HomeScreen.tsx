@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Flame, Focus, Sparkles, RefreshCw, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -81,9 +80,27 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { streakData, updateStreak } = useStreakData();
   const { shouldShowTutorial, markTutorialComplete, loading: tutorialLoading } = useTutorial();
-  const { toggleLike, isLiked } = useNudgeLikes();
+  const { toggleLike, isLiked, getNextQueuedNudge, removeFromQueue } = useNudgeLikes();
   const { gardenData } = useGardenData();
   const { toast } = useToast();
+
+  // Check for queued nudges and use them instead of default prompts
+  useEffect(() => {
+    const queuedNudge = getNextQueuedNudge();
+    if (queuedNudge) {
+      // Find if this nudge is already in prompts array
+      const existingIndex = prompts.findIndex(p => p.id.toString() === queuedNudge.id.toString());
+      
+      if (existingIndex === -1) {
+        // Add the queued nudge to prompts array and set it as current
+        prompts.unshift(queuedNudge);
+        setCurrentPromptIndex(0);
+      } else {
+        // Use existing nudge
+        setCurrentPromptIndex(existingIndex);
+      }
+    }
+  }, []);
 
   const currentPrompt = prompts[currentPromptIndex];
 
@@ -140,6 +157,9 @@ export default function HomeScreen() {
   const handleComplete = async () => {
     setIsEngaged(false);
     setCelebrating(true);
+    
+    // Remove completed nudge from queue if it was queued
+    removeFromQueue(currentPrompt.id.toString());
     
     await updateStreak();
     
