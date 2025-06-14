@@ -1,17 +1,34 @@
 
-const PixelAvatar = ({ size = 40 }: { size?: number }) => (
-  <div
-    className="rounded-full border-2 border-joy-steel-blue bg-joy-light-blue overflow-hidden shadow"
-    style={{ width: size, height: size }}
-  >
-    <img
-      src="https://api.dicebear.com/7.x/pixel-art/svg?seed=joynudge"
-      alt="User avatar"
-      width={size}
-      height={size}
-      className="object-cover w-full h-full"
-      draggable={false}
-    />
-  </div>
-);
-export default PixelAvatar;
+import { User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+
+interface PixelAvatarProps {
+  onClick?: () => void;
+  size?: "sm" | "md" | "lg";
+}
+
+export default function PixelAvatar({ onClick, size = "md" }: PixelAvatarProps) {
+  const { user } = useAuth();
+  
+  const sizeClasses = {
+    sm: "w-8 h-8",
+    md: "w-10 h-10", 
+    lg: "w-12 h-12"
+  };
+
+  if (!user) return null;
+
+  return (
+    <button
+      onClick={onClick}
+      className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-joy-coral to-joy-steel-blue flex items-center justify-center hover:scale-105 transition-transform pixelated-border`}
+      style={{
+        imageRendering: 'pixelated',
+        imageRendering: '-moz-crisp-edges',
+        imageRendering: 'crisp-edges'
+      }}
+    >
+      <User size={size === "sm" ? 16 : size === "md" ? 20 : 24} className="text-white" />
+    </button>
+  );
+}
