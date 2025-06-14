@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
@@ -5,6 +6,7 @@ import { Switch } from "./ui/switch";
 import { Bell, Moon, Palette, User, Shield, Heart, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import AvatarSelector from "./AvatarSelector";
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
@@ -89,6 +91,9 @@ export default function SettingsScreen() {
         <h1 className="text-3xl font-nunito font-bold text-joy-dark-blue mb-8 text-center">
           Settings
         </h1>
+
+        {/* Avatar Selection Section */}
+        <AvatarSelector inSettings={true} />
 
         {/* Profile Section */}
         <div className="joy-card p-6 mb-6">

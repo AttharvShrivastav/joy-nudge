@@ -304,6 +304,7 @@ export type Database = {
           last_active_at: string | null
           last_streak_update_date: string | null
           longest_streak_days: number | null
+          selected_avatar_url: string | null
           subscription_status:
             | Database["public"]["Enums"]["subscription_status"]
             | null
@@ -318,6 +319,7 @@ export type Database = {
           last_active_at?: string | null
           last_streak_update_date?: string | null
           longest_streak_days?: number | null
+          selected_avatar_url?: string | null
           subscription_status?:
             | Database["public"]["Enums"]["subscription_status"]
             | null
@@ -332,6 +334,7 @@ export type Database = {
           last_active_at?: string | null
           last_streak_update_date?: string | null
           longest_streak_days?: number | null
+          selected_avatar_url?: string | null
           subscription_status?:
             | Database["public"]["Enums"]["subscription_status"]
             | null
