@@ -61,8 +61,8 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
         return;
       }
 
-      // If no AI nudge for today, generate one or use breathing nudge
-      const breathingNudge = fallbackNudges.find(nudge => nudge.interactive_type === 'BREATHING') || fallbackNudges[0];
+      // If no AI nudge for today, use breathing nudge (first in fallback array)
+      const breathingNudge = fallbackNudges[0]; // First nudge is always breathing
       setCurrentNudge({
         id: `breathing-${Date.now()}`,
         ...breathingNudge
@@ -70,7 +70,7 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
     } catch (error) {
       console.error('Error loading nudge:', error);
       // Fallback to breathing nudge
-      const breathingNudge = fallbackNudges.find(nudge => nudge.interactive_type === 'BREATHING') || fallbackNudges[0];
+      const breathingNudge = fallbackNudges[0];
       setCurrentNudge({
         id: `fallback-${Date.now()}`,
         ...breathingNudge
@@ -100,7 +100,7 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
     } catch (error) {
       console.error('Error generating nudge:', error);
       // Fallback to breathing nudge
-      const breathingNudge = fallbackNudges.find(nudge => nudge.interactive_type === 'BREATHING') || fallbackNudges[0];
+      const breathingNudge = fallbackNudges[0];
       setCurrentNudge({
         id: `fallback-${Date.now()}`,
         ...breathingNudge
@@ -194,7 +194,7 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="p-4 pt-16"
+            className="p-4 pt-16 pb-24"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -212,7 +212,7 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="text-5xl mb-3"
+                className="text-4xl mb-3"
               >
                 ✨
               </motion.div>
@@ -283,7 +283,7 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="p-4 pt-16"
+            className="p-4 pt-16 pb-24"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -301,7 +301,7 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="text-5xl mb-3"
+                className="text-4xl mb-3"
               >
                 🌟
               </motion.div>
