@@ -71,7 +71,7 @@ export default function Auth() {
       y: 0,
       transition: { 
         duration: 0.6,
-        ease: [0.25, 0.1, 0.25, 1],
+        ease: "easeOut",
         staggerChildren: 0.1
       }
     }
@@ -82,7 +82,7 @@ export default function Auth() {
     visible: { 
       opacity: 1, 
       y: 0,
-      transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
+      transition: { duration: 0.4, ease: "easeOut" }
     }
   };
 
