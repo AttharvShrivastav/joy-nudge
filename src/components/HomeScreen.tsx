@@ -486,12 +486,12 @@ export default function HomeScreen() {
           </motion.button>
         </motion.div>
 
-        {/* MAIN NUDGE CARD - Fixed positioning */}
+        {/* MAIN NUDGE CARD - Fixed positioning with higher z-index */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className={`relative ${isEngaged ? 'fixed inset-0 z-50 bg-joy-white/95 backdrop-blur-sm flex items-center justify-center p-4' : 'z-10'}`}
+          className={`relative ${isEngaged ? 'fixed inset-0 z-[9999] bg-joy-white/95 backdrop-blur-sm flex items-center justify-center p-4' : 'z-10'}`}
         >
           <Celebration show={celebrating} />
           
