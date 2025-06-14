@@ -106,6 +106,23 @@ export default function HomeScreen() {
 
   const displayStreak = streakData?.current_streak_days || 0;
 
+  // Enhanced streak display with milestone celebration
+  const getStreakDisplay = () => {
+    const streak = displayStreak;
+    if (streak >= 30) {
+      return { emoji: "🏆", color: "from-yellow-400 to-orange-500", message: "Streak Master!" };
+    } else if (streak >= 14) {
+      return { emoji: "🌟", color: "from-purple-400 to-pink-500", message: "Two Weeks Strong!" };
+    } else if (streak >= 7) {
+      return { emoji: "🔥", color: "from-red-400 to-orange-500", message: "One Week!" };
+    } else if (streak >= 3) {
+      return { emoji: "⚡", color: "from-blue-400 to-purple-500", message: "Building momentum!" };
+    }
+    return { emoji: "🌱", color: "from-green-400 to-blue-500", message: "Getting started!" };
+  };
+
+  const streakDisplay = getStreakDisplay();
+
   if (tutorialLoading) {
     return (
       <div className="min-h-screen bg-joy-white flex items-center justify-center">
@@ -117,21 +134,26 @@ export default function HomeScreen() {
   return (
     <div className="min-h-screen bg-joy-white pb-20 px-4 relative">
       <div className="max-w-md mx-auto pt-8 relative">
-        {/* Pixelated Avatar in top right */}
-        <div className="absolute top-0 right-0 z-20">
+        {/* Pixelated Avatar in top right - Enhanced visibility */}
+        <div className="absolute top-0 right-0 z-30">
           <PixelAvatar size="md" />
         </div>
         
-        {/* Top bar: greeting and streak */}
+        {/* Top bar: greeting and enhanced streak */}
         <div className="flex justify-center items-center mb-6 pt-2">
           <div className="flex flex-col items-center">
             <span className="font-nunito text-xl font-semibold text-joy-dark-blue mb-1">
               {getGreeting()}
             </span>
-            <div className="flex items-center mt-1 gap-1 bg-joy-light-blue px-3 py-1 rounded-full shadow border-[1.5px] border-joy-steel-blue">
-              <Flame className="text-joy-coral" size={22} />
-              <span className="font-nunito font-bold text-xl text-joy-dark-blue">{displayStreak}</span>
-              <span className="font-lato text-joy-steel-blue text-sm ml-1">streak</span>
+            
+            {/* Enhanced streak display */}
+            <div className={`flex items-center mt-1 gap-2 bg-gradient-to-r ${streakDisplay.color} px-4 py-2 rounded-full shadow-lg border-2 border-white/50`}>
+              <span className="text-2xl">{streakDisplay.emoji}</span>
+              <div className="text-center">
+                <div className="font-nunito font-bold text-xl text-white">{displayStreak}</div>
+                <div className="font-lato text-white text-xs opacity-90">{streakDisplay.message}</div>
+              </div>
+              <Flame className="text-white/80" size={20} />
             </div>
           </div>
         </div>
@@ -191,12 +213,14 @@ export default function HomeScreen() {
         </div>
       </div>
 
-      {/* Tutorial Modal */}
+      {/* Tutorial Modal - Positioned to not hide nudge */}
       {shouldShowTutorial && (
-        <Tutorial
-          onComplete={handleTutorialComplete}
-          onSkip={handleTutorialSkip}
-        />
+        <div className="fixed inset-0 z-40">
+          <Tutorial
+            onComplete={handleTutorialComplete}
+            onSkip={handleTutorialSkip}
+          />
+        </div>
       )}
 
       {/* Focus Mode Modal */}

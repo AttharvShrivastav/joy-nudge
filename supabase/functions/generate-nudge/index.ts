@@ -31,27 +31,48 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    console.log('Generating nudge for user:', user.id)
+    console.log('Generating unique nudge for user:', user.id)
 
-    const { context, category = 'mindfulness' } = await req.json()
+    const { context, category = 'mindfulness', mood } = await req.json()
 
-    // Call Google Gemini API
+    // Call Google Gemini API with enhanced prompt for truly unique content
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiApiKey) {
       throw new Error('Gemini API key not configured')
     }
 
-    const prompt = `Create a mindful, gentle nudge for someone who wants to improve their wellbeing. 
-    Context: ${context || 'general mindfulness'}
-    Category: ${category}
+    // Generate a random seed to ensure uniqueness
+    const randomSeed = Math.random().toString(36).substring(2, 15)
+    const timestamp = new Date().getTime()
+
+    const enhancedPrompt = `Create a completely unique, never-before-seen mindful nudge for someone seeking joy and wellbeing. 
+
+    CREATIVITY REQUIREMENTS:
+    - This must be 100% original and creative, not based on common mindfulness practices
+    - Think outside the box and combine unexpected elements
+    - Make it delightfully surprising yet achievable
+    - Focus on micro-moments of joy and discovery
+    
+    Context: ${context || 'general wellbeing'}
+    Category preference: ${category}
+    User mood: ${mood || 'neutral'}
+    Uniqueness seed: ${randomSeed}
+    
+    CREATIVE INSPIRATION AREAS (pick unexpected combinations):
+    - Sensory exploration (textures, sounds, scents, temperatures)
+    - Movement and body awareness (finger dances, silly stretches)
+    - Connection with environment (talking to plants, cloud conversations)
+    - Playful creativity (drawing with non-dominant hand, humming to objects)
+    - Micro-adventures (finding hidden details, creating tiny stories)
+    - Gentle self-care rituals (making faces in mirror, thanking body parts)
     
     Please respond with a JSON object containing:
-    - title: A short, encouraging title (max 50 characters)
-    - description: A warm, supportive description (max 200 characters)
+    - title: A whimsical, unique title (max 50 characters) that sparks curiosity
+    - description: A warm, playful description (max 180 characters) explaining the unique activity
     - category: One of: mindfulness, gratitude, physical, joy, self-love, creativity
-    - interactive_type: One of: BREATHING, TIMED, OBSERVATIONAL, REFLECTIVE, NONE
+    - interactive_type: Choose the most fitting: BREATHING, TIMED, OBSERVATIONAL, REFLECTIVE, NONE
     
-    Make it personal, gentle, and actionable. Focus on small, achievable actions that bring joy and peace.`
+    Make it feel like a delightful surprise gift - something they've never tried before that brings a smile to their face.`
 
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`,
@@ -63,9 +84,15 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: prompt
+              text: enhancedPrompt
             }]
-          }]
+          }],
+          generationConfig: {
+            temperature: 0.9, // High creativity
+            topP: 0.95,
+            topK: 40,
+            maxOutputTokens: 1024,
+          }
         })
       }
     )
@@ -96,13 +123,28 @@ serve(async (req) => {
       }
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', generatedText)
-      // Fallback nudge if parsing fails
-      nudgeData = {
-        title: "Take a mindful moment",
-        description: "Pause and notice how you're feeling right now. There's no need to change anything, just observe with kindness.",
-        category: category,
-        interactive_type: "REFLECTIVE"
-      }
+      // Enhanced fallback nudges with more creativity
+      const creativeFallbacks = [
+        {
+          title: "Dance with your shadow",
+          description: "Find a light source and have a 2-minute silly dance party with your shadow. Make it laugh!",
+          category: "joy",
+          interactive_type: "TIMED"
+        },
+        {
+          title: "Whisper to something small",
+          description: "Find a tiny object and whisper a kind secret or compliment to it. Notice how it feels to share gentleness.",
+          category: "self-love",
+          interactive_type: "REFLECTIVE"
+        },
+        {
+          title: "Breathe colors",
+          description: "Look around and 'breathe in' a color you see. Imagine that color filling you with its unique energy.",
+          category: "mindfulness",
+          interactive_type: "BREATHING"
+        }
+      ]
+      nudgeData = creativeFallbacks[Math.floor(Math.random() * creativeFallbacks.length)]
     }
 
     // Insert the new nudge into the database
@@ -123,13 +165,13 @@ serve(async (req) => {
       throw insertError
     }
 
-    console.log('Successfully created nudge:', newNudge)
+    console.log('Successfully created unique nudge:', newNudge)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         nudge: newNudge,
-        message: 'New nudge generated successfully!'
+        message: 'Fresh nudge generated just for you!'
       }),
       { 
         headers: { 

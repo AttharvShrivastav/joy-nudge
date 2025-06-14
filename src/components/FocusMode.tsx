@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Square, Volume2, VolumeX, X, Check } from 'lucide-react';
+import { Play, Pause, Square, Volume2, VolumeX, X, Settings, Clock, Target } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -177,56 +177,27 @@ export default function FocusMode({ onClose }: FocusModeProps) {
     ? ((breakDuration * 60 - timeLeft) / (breakDuration * 60)) * 100
     : ((workDuration * 60 - timeLeft) / (workDuration * 60)) * 100;
 
-  const circleCircumference = 2 * Math.PI * 90;
+  const circleCircumference = 2 * Math.PI * 85;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-[#a8dadc] via-joy-white to-[#a8dadc] z-50 overflow-hidden">
-      {/* Ambient background animations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute w-24 h-24 bg-white/10 rounded-full blur-xl"
-          animate={{
-            x: [10, 60, 10],
-            y: [20, 80, 20],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          style={{ top: '10%', left: '10%' }}
-        />
-        <motion.div
-          className="absolute w-20 h-20 bg-joy-coral/10 rounded-full blur-xl"
-          animate={{
-            x: [-10, 30, -10],
-            y: [40, -10, 40],
-            scale: [1, 1.3, 1],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          style={{ top: '60%', right: '15%' }}
-        />
-      </div>
-
-      <div className="relative z-10 h-full flex flex-col">
-        {/* Header */}
-        <div className="flex justify-end items-center p-4 pt-8">
-          <motion.button
+    <div className="fixed inset-0 bg-gradient-to-br from-[#a8dadc] via-joy-white to-[#a8dadc] z-50">
+      {/* Mobile-first container */}
+      <div className="h-full w-full max-w-sm mx-auto flex flex-col relative">
+        {/* Header - Mobile optimized */}
+        <div className="flex justify-between items-center p-4 pt-8 px-6">
+          <h1 className="text-lg font-nunito font-bold text-joy-dark-blue">
+            {showConfig ? 'Focus Setup' : isBreak ? 'Break Time' : 'Focus Time'}
+          </h1>
+          <button
             onClick={onClose}
-            className="p-3 bg-white/20 backdrop-blur-sm rounded-full shadow-lg hover:bg-white/30 transition-colors"
-            whileTap={{ scale: 0.95 }}
+            className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white/90 transition-colors"
           >
             <X className="w-5 h-5 text-joy-steel-blue" />
-          </motion.button>
+          </button>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
+        {/* Main Content - Mobile-first layout */}
+        <div className="flex-1 px-6 pb-8 flex flex-col">
           <AnimatePresence mode="wait">
             {showConfig && !isActive ? (
               <motion.div
@@ -234,72 +205,101 @@ export default function FocusMode({ onClose }: FocusModeProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="w-full max-w-sm space-y-6"
+                className="flex-1 flex flex-col"
               >
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-nunito font-bold text-joy-dark-blue mb-2">
-                    Focus Session
-                  </h1>
-                  <p className="text-joy-steel-blue font-lato text-lg">
-                    Configure your session
-                  </p>
-                </div>
-
-                <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/30">
+                {/* Configuration card - Mobile optimized */}
+                <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/30 mb-6">
                   <div className="space-y-6">
+                    {/* Work Duration */}
                     <div>
-                      <label className="block text-sm font-nunito font-semibold text-joy-dark-blue mb-3">
-                        Work Duration: {workDuration} minutes
-                      </label>
-                      <input
-                        type="range"
-                        min="5"
-                        max="60"
-                        value={workDuration}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value);
-                          setWorkDuration(value);
-                          setTimeLeft(value * 60);
-                        }}
-                        className="w-full h-3 bg-joy-light-blue rounded-lg appearance-none cursor-pointer slider"
-                      />
+                      <div className="flex items-center gap-3 mb-3">
+                        <Target className="w-5 h-5 text-joy-coral" />
+                        <label className="font-nunito font-semibold text-joy-dark-blue">
+                          Focus Time: {workDuration} minutes
+                        </label>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="5"
+                          max="60"
+                          value={workDuration}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            setWorkDuration(value);
+                            setTimeLeft(value * 60);
+                          }}
+                          className="w-full h-3 bg-joy-light-blue/50 rounded-full appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-joy-coral"
+                          style={{
+                            background: `linear-gradient(to right, #f28b82 0%, #f28b82 ${(workDuration - 5) / 55 * 100}%, #a8dadc ${(workDuration - 5) / 55 * 100}%, #a8dadc 100%)`
+                          }}
+                        />
+                        <div className="flex justify-between text-xs text-joy-steel-blue mt-1">
+                          <span>5 min</span>
+                          <span>60 min</span>
+                        </div>
+                      </div>
                     </div>
                     
+                    {/* Break Duration */}
                     <div>
-                      <label className="block text-sm font-nunito font-semibold text-joy-dark-blue mb-3">
-                        Break Duration: {breakDuration} minutes
-                      </label>
-                      <input
-                        type="range"
-                        min="1"
-                        max="15"
-                        value={breakDuration}
-                        onChange={(e) => setBreakDuration(parseInt(e.target.value))}
-                        className="w-full h-3 bg-joy-light-blue rounded-lg appearance-none cursor-pointer slider"
-                      />
+                      <div className="flex items-center gap-3 mb-3">
+                        <Clock className="w-5 h-5 text-joy-steel-blue" />
+                        <label className="font-nunito font-semibold text-joy-dark-blue">
+                          Break Time: {breakDuration} minutes
+                        </label>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="1"
+                          max="15"
+                          value={breakDuration}
+                          onChange={(e) => setBreakDuration(parseInt(e.target.value))}
+                          className="w-full h-3 bg-joy-light-blue/50 rounded-full appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-joy-steel-blue"
+                          style={{
+                            background: `linear-gradient(to right, #457b9d 0%, #457b9d ${(breakDuration - 1) / 14 * 100}%, #a8dadc ${(breakDuration - 1) / 14 * 100}%, #a8dadc 100%)`
+                          }}
+                        />
+                        <div className="flex justify-between text-xs text-joy-steel-blue mt-1">
+                          <span>1 min</span>
+                          <span>15 min</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <button
-                      onClick={() => setSoundEnabled(!soundEnabled)}
-                      className="flex items-center justify-center gap-3 w-full p-4 bg-joy-light-blue/30 rounded-xl hover:bg-joy-light-blue/40 transition-colors"
-                    >
-                      {soundEnabled ? <Volume2 className="w-5 h-5 text-joy-steel-blue" /> : <VolumeX className="w-5 h-5 text-joy-steel-blue" />}
-                      <span className="font-nunito font-medium text-joy-dark-blue">
-                        {soundEnabled ? 'Sound On' : 'Sound Off'}
-                      </span>
-                    </button>
-
-                    <motion.button
-                      onClick={handleStart}
-                      className="w-full flex items-center justify-center gap-3 bg-joy-steel-blue text-white py-4 rounded-2xl font-nunito font-semibold text-lg hover:bg-joy-dark-blue transition-colors shadow-lg"
-                      whileTap={{ scale: 0.98 }}
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      <Play className="w-6 h-6" />
-                      Start Focus Session
-                    </motion.button>
+                    {/* Sound Toggle */}
+                    <div className="flex items-center justify-between p-4 bg-joy-light-blue/20 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        {soundEnabled ? <Volume2 className="w-5 h-5 text-joy-steel-blue" /> : <VolumeX className="w-5 h-5 text-joy-steel-blue" />}
+                        <span className="font-nunito font-medium text-joy-dark-blue">
+                          Sound Notifications
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setSoundEnabled(!soundEnabled)}
+                        className={`w-12 h-6 rounded-full transition-colors ${
+                          soundEnabled ? 'bg-joy-coral' : 'bg-gray-300'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
+                          soundEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                        }`} />
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Start Button - Mobile optimized */}
+                <motion.button
+                  onClick={handleStart}
+                  className="w-full bg-gradient-to-r from-joy-coral to-joy-steel-blue text-white py-4 rounded-2xl font-nunito font-bold text-lg shadow-lg flex items-center justify-center gap-3 mt-auto"
+                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <Play className="w-6 h-6" />
+                  Start Focus Session
+                </motion.button>
               </motion.div>
             ) : (
               <motion.div
@@ -307,50 +307,39 @@ export default function FocusMode({ onClose }: FocusModeProps) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="text-center"
+                className="flex-1 flex flex-col items-center justify-center"
               >
-                <div className="mb-8">
-                  <h1 className="text-3xl font-nunito font-bold text-joy-dark-blue mb-2">
-                    {isBreak ? 'Break Time' : 'Focus Time'}
-                  </h1>
-                  <p className="text-joy-steel-blue font-lato text-lg">
-                    {isBreak 
-                      ? 'Rest and recharge your mind' 
-                      : 'Deep work mode - stay present'
-                    }
-                  </p>
-                </div>
-
-                {/* Timer Circle */}
-                <div className="relative mb-12">
-                  <svg className="w-64 h-64 transform -rotate-90" viewBox="0 0 200 200">
+                {/* Timer Circle - Mobile optimized */}
+                <div className="relative mb-8">
+                  <svg className="w-64 h-64" viewBox="0 0 200 200">
                     <circle
                       cx="100"
                       cy="100"
-                      r="90"
+                      r="85"
                       stroke="currentColor"
-                      strokeWidth="6"
+                      strokeWidth="8"
                       fill="none"
-                      className="text-white/30"
+                      className="text-white/40"
                     />
                     <motion.circle
                       cx="100"
                       cy="100"
-                      r="90"
+                      r="85"
                       stroke="currentColor"
-                      strokeWidth="6"
+                      strokeWidth="8"
                       fill="none"
-                      className={isBreak ? "text-joy-coral" : "text-joy-steel-blue"}
+                      className={isBreak ? "text-joy-steel-blue" : "text-joy-coral"}
                       strokeLinecap="round"
                       strokeDasharray={circleCircumference}
                       strokeDashoffset={circleCircumference * (1 - progress / 100)}
+                      style={{ transform: 'rotate(-90deg)', transformOrigin: '100px 100px' }}
                       transition={{ duration: 0.3 }}
                     />
                   </svg>
                   
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
-                      <div className="text-4xl font-nunito font-bold text-joy-dark-blue mb-2">
+                      <div className="text-4xl font-nunito font-bold text-joy-dark-blue mb-1">
                         {formatTime(timeLeft)}
                       </div>
                       <div className="text-sm font-lato text-joy-steel-blue">
@@ -360,25 +349,23 @@ export default function FocusMode({ onClose }: FocusModeProps) {
                   </div>
                 </div>
 
-                {/* Controls */}
-                <div className="flex justify-center gap-4 w-full max-w-sm">
+                {/* Controls - Mobile optimized */}
+                <div className="w-full space-y-4">
                   {!isActive ? (
                     <motion.button
                       onClick={handleStart}
-                      className="flex-1 flex items-center justify-center gap-3 bg-joy-steel-blue text-white py-4 rounded-2xl font-nunito font-semibold text-lg hover:bg-joy-dark-blue transition-colors shadow-lg"
+                      className="w-full bg-gradient-to-r from-joy-coral to-joy-steel-blue text-white py-4 rounded-2xl font-nunito font-bold text-lg shadow-lg flex items-center justify-center gap-3"
                       whileTap={{ scale: 0.98 }}
-                      whileHover={{ scale: 1.02 }}
                     >
                       <Play className="w-6 h-6" />
                       Start
                     </motion.button>
                   ) : (
-                    <>
+                    <div className="flex gap-3">
                       <motion.button
                         onClick={handlePause}
-                        className="flex-1 flex items-center justify-center gap-2 bg-joy-coral text-white py-4 rounded-2xl font-nunito font-semibold hover:opacity-90 transition-opacity shadow-lg"
+                        className="flex-1 bg-joy-coral text-white py-4 rounded-2xl font-nunito font-semibold text-lg shadow-lg flex items-center justify-center gap-2"
                         whileTap={{ scale: 0.98 }}
-                        whileHover={{ scale: 1.02 }}
                       >
                         <Pause className="w-5 h-5" />
                         {isPaused ? 'Resume' : 'Pause'}
@@ -386,26 +373,24 @@ export default function FocusMode({ onClose }: FocusModeProps) {
                       
                       <motion.button
                         onClick={handleStop}
-                        className="flex items-center justify-center gap-2 bg-gray-500 text-white px-6 py-4 rounded-2xl font-nunito font-semibold hover:bg-gray-600 transition-colors shadow-lg"
+                        className="bg-gray-500 text-white p-4 rounded-2xl shadow-lg flex items-center justify-center"
                         whileTap={{ scale: 0.98 }}
-                        whileHover={{ scale: 1.02 }}
                       >
                         <Square className="w-5 h-5" />
                       </motion.button>
-                    </>
+                    </div>
                   )}
                 </div>
 
                 {/* Status indicator */}
                 {isActive && (
                   <motion.div
-                    className="mt-6 text-center"
+                    className="mt-4 text-center"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
                   >
                     <div className={`text-sm font-lato ${isPaused ? 'text-joy-coral' : 'text-joy-steel-blue'}`}>
-                      {isPaused ? 'Session paused' : 'Session active'}
+                      {isPaused ? 'Session paused' : 'Stay focused, you\'re doing great!'}
                     </div>
                   </motion.div>
                 )}
