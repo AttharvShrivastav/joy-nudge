@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import TabNavigation from "@/components/TabNavigation";
 import HomeScreen from "@/components/HomeScreen";
@@ -8,9 +9,11 @@ import DiscoverScreen from "@/components/DiscoverScreen";
 import GardenScreen from "@/components/GardenScreen";
 import SettingsScreen from "@/components/SettingsScreen";
 import PixelAvatar from "@/components/PixelAvatar";
+import LoadingScreen from "@/components/LoadingScreen";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
+  const [isAppLoading, setIsAppLoading] = useState(true);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -20,16 +23,19 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-joy-white flex items-center justify-center">
-        <div className="text-joy-steel-blue font-nunito">Loading...</div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (user && !loading) {
+      // Simulate app initialization
+      const timer = setTimeout(() => {
+        setIsAppLoading(false);
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, loading]);
 
-  if (!user) {
-    return null;
+  if (loading || !user) {
+    return <LoadingScreen isLoading={true} />;
   }
 
   const renderActiveScreen = () => {
@@ -53,13 +59,30 @@ const Index = () => {
 
   return (
     <div className="min-h-screen w-full bg-joy-white">
-      {/* Pixel Avatar in top right corner */}
-      <div className="absolute top-4 right-4 z-50">
-        <PixelAvatar onClick={handleAvatarClick} />
-      </div>
+      <AnimatePresence>
+        {isAppLoading && <LoadingScreen isLoading={true} />}
+      </AnimatePresence>
       
-      {renderActiveScreen()}
-      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      {!isAppLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Pixel Avatar in top right corner */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="absolute top-4 right-4 z-50"
+          >
+            <PixelAvatar onClick={handleAvatarClick} />
+          </motion.div>
+          
+          {renderActiveScreen()}
+          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        </motion.div>
+      )}
     </div>
   );
 };

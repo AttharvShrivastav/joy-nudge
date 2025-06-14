@@ -12,6 +12,7 @@ interface NudgeData {
   type: string;
   duration?: number;
   items?: string[];
+  interactive_type?: string;
 }
 
 interface InteractiveNudgeProps {
@@ -20,20 +21,34 @@ interface InteractiveNudgeProps {
 }
 
 export default function InteractiveNudge({ nudge, onComplete }: InteractiveNudgeProps) {
-  switch (nudge.type) {
+  // Handle both old format (type) and new format (interactive_type)
+  const nudgeType = nudge.type || nudge.interactive_type?.toLowerCase() || 'reflective';
+  
+  // Map database interactive_type to component types
+  const typeMapping = {
+    'BREATHING': 'breathe',
+    'TIMED': 'timer', 
+    'OBSERVATIONAL': 'observational',
+    'REFLECTIVE': 'reflective',
+    'NONE': 'reflective' // Default to reflective for simple nudges
+  };
+
+  const componentType = typeMapping[nudge.interactive_type as keyof typeof typeMapping] || nudgeType;
+
+  switch (componentType) {
     case "breathe":
+    case "breathing":
       return <BreathingNudge nudge={nudge} onComplete={onComplete} />;
     
     case "timer":
+    case "timed":
       return <TimerNudge nudge={nudge} onComplete={onComplete} />;
     
     case "observational":
       return <ObservationalNudge nudge={nudge} onComplete={onComplete} />;
     
     case "reflective":
-      return <ReflectiveNudge nudge={nudge} onComplete={onComplete} />;
-    
     default:
-      return null;
+      return <ReflectiveNudge nudge={nudge} onComplete={onComplete} />;
   }
 }
