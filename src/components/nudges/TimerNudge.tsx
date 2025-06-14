@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, RotateCcw } from "lucide-react";
@@ -9,9 +8,10 @@ interface TimerNudgeProps {
     duration?: number;
   };
   onComplete: () => void;
+  onSkip?: () => void;
 }
 
-export default function TimerNudge({ nudge, onComplete }: TimerNudgeProps) {
+export default function TimerNudge({ nudge, onComplete, onSkip }: TimerNudgeProps) {
   const totalDuration = (nudge.duration || 60) * 1000;
   const [timeLeft, setTimeLeft] = useState(totalDuration);
   const [isRunning, setIsRunning] = useState(false);
@@ -185,6 +185,19 @@ export default function TimerNudge({ nudge, onComplete }: TimerNudgeProps) {
       <p className="text-sm text-joy-steel-blue/70 font-lato">
         Take your time and be present in the moment
       </p>
+
+      {onSkip && (
+        <div className="flex justify-center">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onSkip}
+            className="joy-button-secondary text-sm px-4 py-2"
+          >
+            Skip
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 }

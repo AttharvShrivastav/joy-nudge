@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface ObservationalNudgeProps {
   nudge: {
@@ -8,9 +8,10 @@ interface ObservationalNudgeProps {
     items?: string[];
   };
   onComplete: () => void;
+  onSkip?: () => void;
 }
 
-export default function ObservationalNudge({ nudge, onComplete }: ObservationalNudgeProps) {
+export default function ObservationalNudge({ nudge, onComplete, onSkip }: ObservationalNudgeProps) {
   const [checkedItems, setCheckedItems] = useState<boolean[]>([]);
   
   useEffect(() => {
@@ -59,6 +60,19 @@ export default function ObservationalNudge({ nudge, onComplete }: ObservationalN
           </button>
         ))}
       </div>
+
+      {onSkip && (
+        <div className="flex justify-center mt-6">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onSkip}
+            className="joy-button-secondary text-sm px-4 py-2"
+          >
+            Skip
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 }

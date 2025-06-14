@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Textarea } from "../ui/textarea";
 
 interface ReflectiveNudgeProps {
@@ -8,9 +8,10 @@ interface ReflectiveNudgeProps {
     description?: string;
   };
   onComplete: () => void;
+  onSkip?: () => void;
 }
 
-export default function ReflectiveNudge({ nudge, onComplete }: ReflectiveNudgeProps) {
+export default function ReflectiveNudge({ nudge, onComplete, onSkip }: ReflectiveNudgeProps) {
   const [reflection, setReflection] = useState("");
   const [wordCount, setWordCount] = useState(0);
   
@@ -78,6 +79,19 @@ export default function ReflectiveNudge({ nudge, onComplete }: ReflectiveNudgePr
       >
         {hasEnoughWords ? 'Save Reflection' : `Write ${minWords - wordCount} more words`}
       </button>
+      
+      {onSkip && (
+        <div className="flex justify-center mt-4">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onSkip}
+            className="joy-button-secondary text-sm px-4 py-2"
+          >
+            Skip
+          </motion.button>
+        </div>
+      )}
       
       {reflection.length > 100 && (
         <div className="mt-3 text-center">
