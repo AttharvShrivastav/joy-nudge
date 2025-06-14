@@ -76,6 +76,7 @@ export default function HomeScreen() {
   const [showMoodSelector, setShowMoodSelector] = useState(false);
   const [currentMood, setCurrentMood] = useState<string>('open');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [showCelebrationText, setShowCelebrationText] = useState(false);
   
   const { user } = useAuth();
   const { streakData, updateStreak } = useStreakData();
@@ -188,17 +189,24 @@ export default function HomeScreen() {
     playSound('celebration');
     setIsEngaged(false);
     setCelebrating(true);
+    setShowCelebrationText(false);
     
     // Remove completed nudge from queue if it was queued
     removeFromQueue(currentPrompt.id.toString());
     
     await updateStreak();
     
+    // Show celebration text after confetti animation
+    setTimeout(() => {
+      setShowCelebrationText(true);
+    }, 1500);
+    
     setTimeout(() => {
       setCelebrating(false);
+      setShowCelebrationText(false);
       setShowMoreNudges(true);
       generateMoreNudges();
-    }, 2000);
+    }, 3500);
   };
 
   const generateMoreNudges = async () => {
@@ -401,12 +409,22 @@ export default function HomeScreen() {
           </motion.button>
         </motion.div>
 
-        {/* MAIN NUDGE CARD OR MORE NUDGES */}
+        {/* MAIN NUDGE CARD OR MORE NUDGES - Fixed z-index */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="relative z-10"
+          className={`relative ${isEngaged ? 'z-50' : 'z-10'}`}
+          style={{ position: isEngaged ? 'fixed' : 'relative', 
+                   top: isEngaged ? '0' : 'auto',
+                   left: isEngaged ? '0' : 'auto',
+                   right: isEngaged ? '0' : 'auto',
+                   bottom: isEngaged ? '0' : 'auto',
+                   backgroundColor: isEngaged ? 'rgba(255, 255, 255, 0.98)' : 'transparent',
+                   padding: isEngaged ? '20px' : '0',
+                   display: isEngaged ? 'flex' : 'block',
+                   alignItems: isEngaged ? 'center' : 'normal',
+                   justifyContent: isEngaged ? 'center' : 'normal' }}
         >
           <Celebration show={celebrating} />
           
@@ -513,6 +531,7 @@ export default function HomeScreen() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
+                className={isEngaged ? 'w-full max-w-md' : ''}
               >
                 {!celebrating && (
                   <div
@@ -581,10 +600,26 @@ export default function HomeScreen() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="joy-card p-8 text-center animate-fade-in"
                   >
-                    <div className="text-4xl mb-4">🌟</div>
-                    <div className="joy-script text-2xl">
-                      {currentPrompt.affirmation}
-                    </div>
+                    <AnimatePresence>
+                      {showCelebrationText && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          <div className="mb-4">
+                            <img 
+                              src="/lovable-uploads/424186e2-de89-4a2a-a690-1d1d0f47bbe8.png" 
+                              alt="Joy Nudge" 
+                              className="w-16 h-16 mx-auto rounded-full"
+                            />
+                          </div>
+                          <div className="joy-script text-2xl">
+                            {currentPrompt.affirmation}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 )}
               </motion.div>

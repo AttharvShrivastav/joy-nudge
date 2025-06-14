@@ -17,9 +17,6 @@ export default function GardenScreen() {
     setReflections(savedReflections);
   }, []);
 
-  const totalNudges = 47; // This would come from a completions count in a real implementation
-  const plantsUnlocked = 8;
-
   return (
     <div className="min-h-screen bg-joy-white pb-20 px-4">
       <div className="max-w-md mx-auto pt-12">
@@ -30,9 +27,7 @@ export default function GardenScreen() {
         <GardenTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {/* Tab Content */}
-        {activeTab === 'garden' && (
-          <GardenView totalNudges={totalNudges} plantsUnlocked={plantsUnlocked} />
-        )}
+        {activeTab === 'garden' && <GardenView />}
         {activeTab === 'stats' && (
           <StatsView streakData={streakData} loading={loading} />
         )}

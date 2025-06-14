@@ -1,52 +1,22 @@
 
 import { Leaf, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { useGardenAchievements } from "@/hooks/useGardenAchievements";
 
-interface Plant {
-  id: number;
-  name: string;
-  emoji: string;
-  unlocked: boolean;
-  progress: number;
-  x: number;
-  y: number;
-  level: number;
-}
+export default function GardenView() {
+  const { plants, unlockedPlantsCount, loading } = useGardenAchievements();
 
-interface GardenViewProps {
-  totalNudges: number;
-  plantsUnlocked: number;
-}
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-joy-steel-blue font-nunito">Loading your garden...</div>
+      </div>
+    );
+  }
 
-export default function GardenView({ totalNudges, plantsUnlocked }: GardenViewProps) {
-  // Dynamic plants based on progress
-  const generatePlants = (): Plant[] => {
-    const baseShapes = [
-      { name: "Mindfulness Moss", emoji: "🌱", x: 20, y: 60 },
-      { name: "Gratitude Grass", emoji: "🌿", x: 40, y: 80 },
-      { name: "Joy Jasmine", emoji: "🌸", x: 70, y: 50 },
-      { name: "Calm Chrysanthemum", emoji: "🌼", x: 30, y: 30 },
-      { name: "Energy Eucalyptus", emoji: "🌳", x: 80, y: 75 },
-      { name: "Peace Peony", emoji: "🌺", x: 60, y: 20 },
-    ];
-
-    return baseShapes.map((plant, index) => {
-      const isUnlocked = index < plantsUnlocked;
-      const completionsForThisPlant = Math.max(0, totalNudges - (index * 3));
-      const progress = isUnlocked ? Math.min(100, (completionsForThisPlant / 3) * 100) : 0;
-      const level = isUnlocked ? Math.floor(completionsForThisPlant / 5) + 1 : 0;
-
-      return {
-        id: index + 1,
-        ...plant,
-        unlocked: isUnlocked,
-        progress,
-        level: Math.min(level, 5) // Max level 5
-      };
-    });
-  };
-
-  const plants = generatePlants();
+  const totalNudges = plants.reduce((sum, plant) => 
+    plant.unlocked ? plant.requirements.nudgeCompletions : 0, 0
+  );
 
   return (
     <div className="space-y-6">
@@ -88,11 +58,11 @@ export default function GardenView({ totalNudges, plantsUnlocked }: GardenViewPr
           Your Joy Garden
         </h2>
         <p className="text-joy-steel-blue font-lato">
-          {totalNudges} nudges completed • {plantsUnlocked} plants blooming
+          {totalNudges} nudges completed • {unlockedPlantsCount} plants blooming
         </p>
         
         {/* Progress celebration */}
-        {totalNudges > 25 && (
+        {unlockedPlantsCount >= 3 && (
           <motion.div
             className="mt-3 bg-gradient-to-r from-joy-coral/20 to-joy-steel-blue/20 rounded-lg p-2"
             initial={{ opacity: 0, y: 10 }}
@@ -139,7 +109,7 @@ export default function GardenView({ totalNudges, plantsUnlocked }: GardenViewPr
                 top: `${plant.y}%`,
                 filter: plant.unlocked ? 'none' : 'grayscale(100%)'
               }}
-              title={plant.unlocked ? `${plant.name} - Level ${plant.level}` : 'Locked'}
+              title={plant.unlocked ? `${plant.name} - Level ${plant.level}` : `Locked - Need ${plant.requirements.nudgeCompletions} nudges${plant.requirements.streakDays ? `, ${plant.requirements.streakDays} day streak` : ''}${plant.requirements.focusSessions ? `, ${plant.requirements.focusSessions} focus sessions` : ''}`}
               whileHover={plant.unlocked ? { scale: 1.2, y: -5 } : {}}
               animate={plant.unlocked ? {
                 y: [0, -2, 0],
@@ -220,7 +190,9 @@ export default function GardenView({ totalNudges, plantsUnlocked }: GardenViewPr
             )}
             {!plant.unlocked && (
               <div className="text-xs text-joy-steel-blue/60">
-                Complete {(plant.id - 1) * 3 + 1} more nudges
+                Need {plant.requirements.nudgeCompletions} nudges
+                {plant.requirements.streakDays && `, ${plant.requirements.streakDays} day streak`}
+                {plant.requirements.focusSessions && `, ${plant.requirements.focusSessions} focus sessions`}
               </div>
             )}
           </motion.div>
