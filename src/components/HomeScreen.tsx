@@ -194,13 +194,13 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="p-4 pt-16 pb-24"
+            className="p-3 pt-12 pb-20"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-center mb-6"
+              className="text-center mb-4"
             >
               <motion.div
                 animate={{ 
@@ -212,19 +212,19 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="text-4xl mb-3"
+                className="text-3xl mb-2"
               >
                 ✨
               </motion.div>
-              <h2 className="text-xl font-fredoka font-bold text-joy-dark-blue mb-2">
+              <h2 className="text-lg font-fredoka font-bold text-joy-dark-blue mb-1">
                 Wonderful! Keep the momentum going
               </h2>
-              <p className="text-joy-steel-blue font-lato text-sm">
+              <p className="text-joy-steel-blue font-lato text-xs">
                 Here are some more nudges you might enjoy
               </p>
             </motion.div>
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-2 mb-4">
               {suggestedNudges.map((nudge, index) => (
                 <motion.div
                   key={nudge.id}
@@ -232,12 +232,12 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * index }}
                   whileHover={{ scale: 1.02 }}
-                  className="bg-joy-white rounded-xl p-4 shadow-lg border border-joy-light-blue/20 cursor-pointer"
+                  className="bg-joy-white rounded-lg p-3 shadow-lg border border-joy-light-blue/20 cursor-pointer"
                   onClick={() => handleTrySuggestion(nudge)}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start justify-between mb-1">
                     <div className="flex-1">
-                      <h3 className="font-nunito font-semibold text-joy-dark-blue text-base mb-1">
+                      <h3 className="font-fredoka font-semibold text-joy-dark-blue text-sm mb-1">
                         {nudge.title}
                       </h3>
                       <span className="text-xs bg-joy-sage/20 text-joy-sage px-2 py-1 rounded-full">
@@ -246,13 +246,13 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                     </div>
                     <LikeButton nudgeId={nudge.id} nudgeData={nudge} size="sm" />
                   </div>
-                  <p className="text-joy-steel-blue font-lato text-sm mb-3">
+                  <p className="text-joy-steel-blue font-lato text-xs mb-2">
                     {nudge.description}
                   </p>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="w-full bg-joy-coral text-white py-2 rounded-xl font-medium transition-all duration-200"
+                    className="w-full bg-joy-coral text-white py-2 rounded-lg font-medium transition-all duration-200 text-sm"
                   >
                     Try This One
                   </motion.button>
@@ -270,7 +270,7 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowSuggestions(false)}
-                className="text-joy-steel-blue underline font-lato"
+                className="text-joy-steel-blue underline font-lato text-sm"
               >
                 Back to today's nudge
               </motion.button>
@@ -283,13 +283,13 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="p-4 pt-16 pb-24"
+            className="p-3 pt-12 pb-20"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-center mb-6"
+              className="text-center mb-4"
             >
               <motion.div
                 animate={{ 
@@ -301,14 +301,14 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="text-4xl mb-3"
+                className="text-3xl mb-2"
               >
                 🌟
               </motion.div>
-              <h1 className="text-2xl font-fredoka font-bold text-joy-dark-blue mb-2">
+              <h1 className="text-lg font-fredoka font-bold text-joy-dark-blue mb-1">
                 Your Joy Nudge
               </h1>
-              <p className="text-joy-steel-blue font-lato text-sm">
+              <p className="text-joy-steel-blue font-lato text-xs">
                 {currentMood ? `Perfect for when you're feeling ${currentMood}` : 'A moment of mindfulness, just for you'}
               </p>
             </motion.div>
@@ -318,17 +318,17 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="grid grid-cols-2 gap-3 mb-6"
+              className="grid grid-cols-2 gap-2 mb-4"
             >
               <motion.div
                 whileHover={{ scale: 1.02 }}
-                className="bg-joy-white rounded-xl p-4 shadow-lg border border-joy-light-blue/20"
+                className="bg-joy-white rounded-lg p-3 shadow-lg border border-joy-light-blue/20"
               >
                 <div className="flex items-center space-x-2 mb-1">
-                  <Flame className="w-4 h-4 text-joy-coral" />
-                  <span className="text-sm font-nunito font-semibold text-joy-dark-blue">Streak</span>
+                  <Flame className="w-3 h-3 text-joy-coral" />
+                  <span className="text-xs font-fredoka font-semibold text-joy-dark-blue">Streak</span>
                 </div>
-                <div className="text-2xl font-fredoka font-bold text-joy-coral">
+                <div className="text-xl font-fredoka font-bold text-joy-coral">
                   {streakData?.current_streak_days || 0}
                 </div>
                 <div className="text-xs text-joy-steel-blue">days</div>
@@ -338,11 +338,11 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowFocus(true)}
-                className="bg-joy-white rounded-xl p-4 shadow-lg border border-joy-light-blue/20 cursor-pointer"
+                className="bg-joy-white rounded-lg p-3 shadow-lg border border-joy-light-blue/20 cursor-pointer"
               >
                 <div className="flex items-center space-x-2 mb-1">
-                  <Target className="w-4 h-4 text-joy-steel-blue" />
-                  <span className="text-sm font-nunito font-semibold text-joy-dark-blue">Focus</span>
+                  <Target className="w-3 h-3 text-joy-steel-blue" />
+                  <span className="text-xs font-fredoka font-semibold text-joy-dark-blue">Focus</span>
                 </div>
                 <div className="text-lg font-fredoka font-bold text-joy-steel-blue">
                   Start
@@ -356,20 +356,20 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-joy-white rounded-2xl p-5 shadow-xl border border-joy-light-blue/20 mb-6"
+                className="bg-joy-white rounded-lg p-4 shadow-xl border border-joy-light-blue/20 mb-4"
               >
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h2 className="text-lg font-nunito font-bold text-joy-dark-blue mb-2">
+                    <h2 className="text-base font-fredoka font-bold text-joy-dark-blue mb-2">
                       {currentNudge.title}
                     </h2>
-                    <div className="flex items-center space-x-2 mb-3">
+                    <div className="flex items-center space-x-2 mb-2">
                       <span className="text-xs bg-joy-sage/20 text-joy-sage px-2 py-1 rounded-full">
                         {currentNudge.category}
                       </span>
                       {currentNudge.is_ai_generated && (
                         <span className="text-xs bg-joy-coral/20 text-joy-coral px-2 py-1 rounded-full flex items-center">
-                          <Sparkles size={10} className="mr-1" />
+                          <Sparkles size={8} className="mr-1" />
                           AI Generated
                         </span>
                       )}
@@ -378,11 +378,11 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                   <LikeButton nudgeId={currentNudge.id} nudgeData={currentNudge} />
                 </div>
                 
-                <p className="text-joy-steel-blue font-lato mb-5 leading-relaxed text-sm">
+                <p className="text-joy-steel-blue font-lato mb-4 leading-relaxed text-sm">
                   {currentNudge.description}
                 </p>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <AnimatedButton
                     onClick={handleTryNow}
                     text="Try Now ✨"
@@ -393,13 +393,13 @@ export default function HomeScreen({ currentMood }: HomeScreenProps) {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleRefreshNudge}
                     disabled={isGenerating}
-                    className="w-full bg-joy-light-blue/10 text-joy-dark-blue py-3 rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50"
+                    className="w-full bg-joy-light-blue/10 text-joy-dark-blue py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 text-sm"
                   >
                     <motion.div
                       animate={isGenerating ? { rotate: 360 } : {}}
                       transition={{ duration: 1, repeat: isGenerating ? Infinity : 0 }}
                     >
-                      <RefreshCw size={16} />
+                      <RefreshCw size={14} />
                     </motion.div>
                     <span>{isGenerating ? 'Generating...' : 'Get New Nudge'}</span>
                   </motion.button>

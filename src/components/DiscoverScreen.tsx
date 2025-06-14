@@ -120,7 +120,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-joy-white to-joy-light-blue/10 p-4 pt-16 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-joy-white to-joy-light-blue/10 p-3 pt-12 pb-20">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -130,7 +130,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="text-center mb-6"
+          className="text-center mb-4"
         >
           <motion.div
             animate={{ 
@@ -142,14 +142,14 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="text-4xl mb-3"
+            className="text-3xl mb-2"
           >
             🔍
           </motion.div>
-          <h1 className="text-2xl font-fredoka font-bold text-joy-dark-blue mb-2">
+          <h1 className="text-lg font-fredoka font-bold text-joy-dark-blue mb-1">
             Discover Nudges
           </h1>
-          <p className="text-joy-steel-blue font-lato text-sm">
+          <p className="text-joy-steel-blue font-lato text-xs">
             Find the perfect nudge for your current mood
           </p>
         </motion.div>
@@ -159,21 +159,21 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-4"
+          className="mb-3"
         >
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-joy-steel-blue" size={16} />
+          <div className="relative mb-2">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-joy-steel-blue" size={14} />
             <Input
               placeholder="Search nudges..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 py-2 rounded-xl border-joy-light-blue/20 focus:border-joy-coral bg-joy-white text-sm"
+              className="pl-9 py-2 rounded-lg border-joy-light-blue/20 focus:border-joy-coral bg-joy-white text-sm h-9"
             />
           </div>
 
-          <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-            <Filter size={14} className="text-joy-steel-blue flex-shrink-0" />
-            <div className="flex space-x-2">
+          <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-hide">
+            <Filter size={12} className="text-joy-steel-blue flex-shrink-0" />
+            <div className="flex space-x-1.5">
               {categories.map((category) => (
                 <motion.div
                   key={category}
@@ -182,7 +182,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
                 >
                   <Badge
                     variant={selectedCategory === category ? "default" : "secondary"}
-                    className={`cursor-pointer whitespace-nowrap transition-all duration-200 text-xs px-3 py-1 ${
+                    className={`cursor-pointer whitespace-nowrap transition-all duration-200 text-xs px-2 py-1 ${
                       selectedCategory === category
                         ? "bg-joy-coral text-white"
                         : "bg-joy-light-blue/10 text-joy-dark-blue hover:bg-joy-light-blue/20"
@@ -202,7 +202,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="space-y-3"
+          className="space-y-2"
         >
           <AnimatePresence>
             {filteredNudges.map((nudge, index) => (
@@ -211,16 +211,16 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: 0.05 * index }}
-                whileHover={{ scale: 1.01, y: -2 }}
-                className="bg-joy-white rounded-xl p-4 shadow-lg border border-joy-light-blue/20 transition-all duration-300"
+                transition={{ delay: 0.03 * index }}
+                whileHover={{ scale: 1.01, y: -1 }}
+                className="bg-joy-white rounded-lg p-3 shadow-lg border border-joy-light-blue/20 transition-all duration-300"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h3 className="font-nunito font-semibold text-joy-dark-blue text-base mb-2">
+                    <h3 className="font-fredoka font-semibold text-joy-dark-blue text-sm mb-1">
                       {nudge.title}
                     </h3>
-                    <div className="flex items-center space-x-2 mb-2 flex-wrap">
+                    <div className="flex items-center space-x-1.5 mb-2 flex-wrap">
                       <Badge className="bg-joy-sage/20 text-joy-sage text-xs">
                         {nudge.category}
                       </Badge>
@@ -229,7 +229,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
                       </Badge>
                       {nudge.is_ai_generated && (
                         <Badge className="bg-joy-coral/20 text-joy-coral text-xs flex items-center">
-                          <Sparkles size={8} className="mr-1" />
+                          <Sparkles size={6} className="mr-1" />
                           AI
                         </Badge>
                       )}
@@ -238,7 +238,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
                   <LikeButton nudgeId={nudge.id} nudgeData={nudge} size="sm" />
                 </div>
                 
-                <p className="text-joy-steel-blue font-lato text-sm mb-3 leading-relaxed">
+                <p className="text-joy-steel-blue font-lato text-xs mb-3 leading-relaxed">
                   {nudge.description}
                 </p>
 
@@ -246,7 +246,7 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleTryNow(nudge)}
-                  className="w-full bg-joy-coral text-white py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                  className="w-full bg-joy-coral text-white py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 text-sm"
                 >
                   <span>Try Now</span>
                   <span>✨</span>
@@ -259,10 +259,10 @@ export default function DiscoverScreen({ currentMood }: DiscoverScreenProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-8"
+              className="text-center py-6"
             >
-              <div className="text-3xl mb-3">🔍</div>
-              <p className="text-joy-steel-blue font-lato text-sm">
+              <div className="text-2xl mb-2">🔍</div>
+              <p className="text-joy-steel-blue font-lato text-xs">
                 No nudges found. Try adjusting your search or filters.
               </p>
             </motion.div>

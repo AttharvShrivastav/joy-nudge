@@ -15,7 +15,7 @@ const AnimatedButton = ({
     whileTap={{ scale: 0.95 }}
     transition={{ type: "spring", stiffness: 400, damping: 20 }}
     onClick={onClick}
-    className={`w-full bg-joy-coral text-white py-3 px-6 ${rounded ? "rounded-full" : "rounded-xl"} font-nunito font-semibold shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95`}
+    className={`w-full bg-joy-coral text-white py-2.5 px-4 ${rounded ? "rounded-full" : "rounded-lg"} font-fredoka font-semibold shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 text-sm`}
   >
     {text}
   </motion.button>
