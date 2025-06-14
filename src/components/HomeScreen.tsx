@@ -1,6 +1,9 @@
 
 import { useState } from "react";
 import { Flame } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useStreakData } from "@/hooks/useStreakData";
+import PixelAvatar from "./PixelAvatar";
 import InteractiveNudge from "./InteractiveNudge";
 import Celebration from "./Celebration";
 
@@ -36,47 +39,82 @@ const prompts = [
     affirmation: "Thank you for sharing your gratitude!",
     type: "reflective"
   },
+  {
+    id: 5,
+    nudge: "Journal your thoughts",
+    description: "Take a few minutes to write down what's on your mind. Let your thoughts flow freely onto the page.",
+    affirmation: "Beautiful reflection! Your thoughts matter.",
+    type: "reflective"
+  },
+  {
+    id: 6,
+    nudge: "What made you smile today?",
+    description: "Reflect on a moment that brought joy to your day, however small it might have been.",
+    affirmation: "Thank you for sharing that beautiful moment!",
+    type: "reflective"
+  }
 ];
 
 export default function HomeScreen() {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [isEngaged, setIsEngaged] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
-  const [streak, setStreak] = useState(7); // example streak
+  const { user } = useAuth();
+  const { streakData, updateStreak } = useStreakData();
 
   const currentPrompt = prompts[currentPromptIndex];
 
   const handleEngage = () => setIsEngaged(true);
-  const handleComplete = () => {
+  
+  const handleComplete = async () => {
     setIsEngaged(false);
     setCelebrating(true);
+    
+    // Update streak in database
+    await updateStreak();
+    
     setTimeout(() => {
       setCelebrating(false);
-      setStreak(prev => prev + 1);
       setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
     }, 2000);
   };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning!";
-    if (hour < 17) return "Good Afternoon!";
-    return "Good Evening!";
+    const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'there';
+    
+    let timeGreeting = '';
+    if (hour < 12) timeGreeting = "Good Morning";
+    else if (hour < 17) timeGreeting = "Good Afternoon";
+    else timeGreeting = "Good Evening";
+    
+    return `${timeGreeting}, ${username}!`;
   };
+
+  const displayStreak = streakData?.current_streak_days || 0;
 
   return (
     <div className="min-h-screen bg-joy-white pb-20 px-4">
       <div className="max-w-md mx-auto pt-8 relative">
+        {/* Pixelated Avatar in top right */}
+        <div className="absolute top-0 right-0 z-10">
+          <PixelAvatar size="md" />
+        </div>
+        
         {/* Top bar: greeting and streak */}
-        <div className="flex justify-center items-center mb-6">
+        <div className="flex justify-center items-center mb-6 pt-2">
           <div className="flex flex-col items-center">
-            <span className="font-nunito text-lg text-joy-dark-blue">{getGreeting()}</span>
+            <span className="font-nunito text-xl font-semibold text-joy-dark-blue mb-1">
+              {getGreeting()}
+            </span>
             <div className="flex items-center mt-1 gap-1 bg-joy-light-blue px-3 py-1 rounded-full shadow border-[1.5px] border-joy-steel-blue">
               <Flame className="text-joy-coral" size={22} />
-              <span className="font-nunito font-bold text-xl text-joy-dark-blue">{streak}</span>
+              <span className="font-nunito font-bold text-xl text-joy-dark-blue">{displayStreak}</span>
               <span className="font-lato text-joy-steel-blue text-sm ml-1">streak</span>
             </div>
           </div>
         </div>
+
         {/* MAIN NUDGE CARD */}
         <Celebration show={celebrating} />
         {!celebrating && (

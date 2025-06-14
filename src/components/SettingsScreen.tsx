@@ -1,17 +1,22 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Switch } from "./ui/switch";
-import { Bell, Moon, Palette, User, Shield, Heart } from "lucide-react";
+import { Bell, Moon, Palette, User, Shield, Heart, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function SettingsScreen() {
+  const { user, signOut } = useAuth();
   const [profile, setProfile] = useState({
-    name: "Your Name",
-    email: "your@email.com",
+    username: "",
+    email: "",
+    first_name: "",
+    last_name: "",
   });
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(profile);
+  const [loading, setLoading] = useState(false);
   
   const [settings, setSettings] = useState({
     notifications: true,
@@ -20,6 +25,19 @@ export default function SettingsScreen() {
     nudgeFrequency: 'daily',
     soundEnabled: true,
   });
+
+  useEffect(() => {
+    if (user) {
+      const userProfile = {
+        username: user.user_metadata?.username || user.email?.split('@')[0] || "",
+        email: user.email || "",
+        first_name: user.user_metadata?.first_name || "",
+        last_name: user.user_metadata?.last_name || "",
+      };
+      setProfile(userProfile);
+      setForm(userProfile);
+    }
+  }, [user]);
 
   const handleEdit = () => {
     setEditing(true);
@@ -32,14 +50,37 @@ export default function SettingsScreen() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setProfile(form);
-    setEditing(false);
+    setLoading(true);
+
+    try {
+      // Update auth metadata
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          username: form.username,
+          first_name: form.first_name,
+          last_name: form.last_name,
+        }
+      });
+
+      if (error) throw error;
+
+      setProfile(form);
+      setEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -59,13 +100,25 @@ export default function SettingsScreen() {
           {!editing ? (
             <div>
               <div className="mb-4 flex justify-between items-center">
-                <div><span className="font-lato text-lg">Name:</span></div>
-                <div className="font-nunito text-lg">{profile.name}</div>
+                <span className="font-lato text-lg text-joy-steel-blue">Username:</span>
+                <span className="font-nunito text-lg text-joy-dark-blue">{profile.username}</span>
               </div>
               <div className="mb-4 flex justify-between items-center">
-                <div><span className="font-lato text-lg">Email:</span></div>
-                <div className="font-nunito text-lg">{profile.email}</div>
+                <span className="font-lato text-lg text-joy-steel-blue">Email:</span>
+                <span className="font-nunito text-lg text-joy-dark-blue">{profile.email}</span>
               </div>
+              {profile.first_name && (
+                <div className="mb-4 flex justify-between items-center">
+                  <span className="font-lato text-lg text-joy-steel-blue">First Name:</span>
+                  <span className="font-nunito text-lg text-joy-dark-blue">{profile.first_name}</span>
+                </div>
+              )}
+              {profile.last_name && (
+                <div className="mb-4 flex justify-between items-center">
+                  <span className="font-lato text-lg text-joy-steel-blue">Last Name:</span>
+                  <span className="font-nunito text-lg text-joy-dark-blue">{profile.last_name}</span>
+                </div>
+              )}
               <Button onClick={handleEdit} className="joy-button-primary w-full mt-2">
                 Edit Profile
               </Button>
@@ -73,19 +126,19 @@ export default function SettingsScreen() {
           ) : (
             <form onSubmit={handleSave}>
               <div className="mb-4">
-                <label className="font-lato block mb-1" htmlFor="name">
-                  Name
+                <label className="font-lato block mb-1 text-joy-dark-blue" htmlFor="username">
+                  Username
                 </label>
                 <Input
-                  id="name"
-                  name="name"
-                  value={form.name}
+                  id="username"
+                  name="username"
+                  value={form.username}
                   onChange={handleChange}
-                  className="mb-2"
+                  className="border-joy-light-blue focus:border-joy-steel-blue"
                 />
               </div>
               <div className="mb-4">
-                <label className="font-lato block mb-1" htmlFor="email">
+                <label className="font-lato block mb-1 text-joy-dark-blue" htmlFor="email">
                   Email
                 </label>
                 <Input
@@ -94,11 +147,42 @@ export default function SettingsScreen() {
                   value={form.email}
                   onChange={handleChange}
                   type="email"
+                  disabled
+                  className="border-joy-light-blue bg-gray-50"
+                />
+                <p className="text-xs text-joy-steel-blue mt-1">Email cannot be changed here</p>
+              </div>
+              <div className="mb-4">
+                <label className="font-lato block mb-1 text-joy-dark-blue" htmlFor="first_name">
+                  First Name
+                </label>
+                <Input
+                  id="first_name"
+                  name="first_name"
+                  value={form.first_name}
+                  onChange={handleChange}
+                  className="border-joy-light-blue focus:border-joy-steel-blue"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="font-lato block mb-1 text-joy-dark-blue" htmlFor="last_name">
+                  Last Name
+                </label>
+                <Input
+                  id="last_name"
+                  name="last_name"
+                  value={form.last_name}
+                  onChange={handleChange}
+                  className="border-joy-light-blue focus:border-joy-steel-blue"
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" className="joy-button-primary flex-1">
-                  Save
+                <Button 
+                  type="submit" 
+                  className="joy-button-primary flex-1"
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Save'}
                 </Button>
                 <Button
                   type="button"
@@ -173,6 +257,17 @@ export default function SettingsScreen() {
               disabled
             />
           </div>
+        </div>
+
+        {/* Sign Out Section */}
+        <div className="joy-card p-6 mb-6">
+          <Button 
+            onClick={handleSignOut}
+            className="w-full bg-joy-coral hover:bg-joy-coral/80 text-white font-nunito font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+          >
+            <LogOut size={20} />
+            Sign Out
+          </Button>
         </div>
 
         {/* About Section */}
