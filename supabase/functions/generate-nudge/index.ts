@@ -79,10 +79,11 @@ serve(async (req) => {
     
     Make it feel like discovering a hidden gem of joy and wonder!`
 
-    console.log('Making request to Gemini API with model: gemini-1.5-flash')
+    console.log('Making request to Gemini API with corrected endpoint')
 
+    // Updated API call to use the correct endpoint format
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -95,7 +96,7 @@ serve(async (req) => {
             }]
           }],
           generationConfig: {
-            temperature: 1.0, // Maximum creativity
+            temperature: 1.0,
             topP: 0.95,
             topK: 40,
             maxOutputTokens: 1024,
@@ -106,12 +107,13 @@ serve(async (req) => {
 
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text()
-      console.error('Gemini API error:', errorText)
-      throw new Error(`Gemini API error: ${geminiResponse.status}`)
+      console.error('Gemini API error response:', errorText)
+      console.error('Gemini API status:', geminiResponse.status)
+      throw new Error(`Gemini API error: ${geminiResponse.status} - ${errorText}`)
     }
 
     const geminiData = await geminiResponse.json()
-    console.log('Gemini response:', geminiData)
+    console.log('Gemini response received successfully:', geminiData)
 
     const generatedText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
     if (!generatedText) {
