@@ -239,6 +239,41 @@ export default function HomeScreen() {
     }
     
     removeFromQueue(currentPrompt.id.toString());
+    
+    // Store nudge completion in backend
+    try {
+      if (user) {
+        const completionData = {
+          user_id: user.id,
+          nudge_id: currentPrompt.id,
+          nudge_title: currentPrompt.nudge,
+          completed_at: new Date().toISOString(),
+          duration_seconds: currentPrompt.duration || 0,
+          mood_at_completion: currentMood
+        };
+
+        // Store in local storage for immediate UI updates
+        const existingCompletions = JSON.parse(localStorage.getItem('nudgeCompletions') || '[]');
+        existingCompletions.push(completionData);
+        localStorage.setItem('nudgeCompletions', JSON.stringify(existingCompletions));
+
+        // Store in Supabase
+        await supabase
+          .from('nudge_completions')
+          .insert({
+            user_id: user.id,
+            user_nudge_id: currentPrompt.id.toString(),
+            duration_seconds: currentPrompt.duration || 0,
+            mood_at_completion: currentMood,
+            completed_at: new Date().toISOString()
+          });
+
+        console.log('Nudge completion stored successfully');
+      }
+    } catch (error) {
+      console.error('Error storing nudge completion:', error);
+    }
+
     await updateStreak();
     
     setTimeout(() => {
@@ -332,15 +367,15 @@ export default function HomeScreen() {
   const getStreakDisplay = () => {
     const streak = displayStreak;
     if (streak >= 30) {
-      return { emoji: "🏆", color: "from-joy-coral to-red-500", message: "Streak Master!" };
+      return { emoji: "🏆", color: "from-joy-coral via-orange-400 to-red-500", message: "Streak Master!" };
     } else if (streak >= 14) {
-      return { emoji: "🌟", color: "from-joy-coral to-red-400", message: "Two Weeks Strong!" };
+      return { emoji: "🌟", color: "from-joy-coral via-orange-400 to-red-400", message: "Two Weeks Strong!" };
     } else if (streak >= 7) {
-      return { emoji: "🔥", color: "from-joy-coral to-red-500", message: "One Week!" };
+      return { emoji: "🔥", color: "from-joy-coral via-orange-400 to-red-500", message: "One Week!" };
     } else if (streak >= 3) {
-      return { emoji: "⚡", color: "from-joy-coral to-red-400", message: "Building momentum!" };
+      return { emoji: "⚡", color: "from-joy-coral via-orange-400 to-red-400", message: "Building momentum!" };
     }
-    return { emoji: "🌱", color: "from-joy-coral to-red-300", message: "Getting started!" };
+    return { emoji: "🌱", color: "from-joy-coral via-orange-300 to-red-300", message: "Getting started!" };
   };
 
   const streakDisplay = getStreakDisplay();
@@ -413,13 +448,16 @@ export default function HomeScreen() {
               {getGreeting()}
             </span>
             
-            <div className={`flex items-center mt-1 gap-2 bg-gradient-to-r ${streakDisplay.color} px-4 py-2 rounded-full shadow-lg border-2 border-white/50`}>
-              <span className="text-2xl">{streakDisplay.emoji}</span>
-              <div className="text-center">
-                <div className="font-nunito font-bold text-xl text-white">{displayStreak}</div>
-                <div className="font-lato text-white text-xs opacity-90">{streakDisplay.message}</div>
+            <div className="flex items-center gap-3 bg-gradient-to-r from-joy-coral via-orange-400 to-red-500 px-6 py-3 rounded-full shadow-lg border-2 border-white/50 relative overflow-hidden">
+              {/* Background pattern */}
+              <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10"></div>
+              
+              <div className="text-2xl relative z-10">{streakDisplay.emoji}</div>
+              <div className="text-center relative z-10">
+                <div className="font-nunito font-bold text-2xl text-white drop-shadow-sm">{displayStreak}</div>
+                <div className="font-lato text-white text-xs opacity-90 drop-shadow-sm">{streakDisplay.message}</div>
               </div>
-              <Flame className="text-white/80" size={20} />
+              <Flame className="text-white/90 relative z-10 drop-shadow-sm" size={22} />
             </div>
           </div>
         </motion.div>
@@ -453,7 +491,7 @@ export default function HomeScreen() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className={`relative ${isEngaged ? 'fixed inset-0 z-40 bg-joy-white/95 backdrop-blur-sm flex items-center justify-center p-4' : 'z-10'}`}
+          className={`relative ${isEngaged ? 'fixed inset-0 z-50 bg-joy-white/95 backdrop-blur-sm flex items-center justify-center p-4' : 'z-10'}`}
         >
           <Celebration show={celebrating} />
           

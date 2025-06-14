@@ -1,5 +1,5 @@
 
-import { Leaf, Sparkles } from "lucide-react";
+import { Leaf, Sparkles, Flower } from "lucide-react";
 import { motion } from "framer-motion";
 import { useGardenAchievements } from "@/hooks/useGardenAchievements";
 
@@ -53,7 +53,9 @@ export default function GardenView() {
           ))}
         </div>
 
-        <div className="text-4xl mb-3">🌻</div>
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <Flower className="w-8 h-8 text-joy-coral" />
+        </div>
         <h2 className="text-xl font-nunito font-semibold text-joy-dark-blue mb-2">
           Your Joy Garden
         </h2>
