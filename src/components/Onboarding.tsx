@@ -1,4 +1,3 @@
-
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import JoyIcon from "./JoyIcon";
@@ -18,17 +17,6 @@ const steps = [
       { label: "Connection", color: "powder" },
       { label: "Focus", color: "peach" },
       { label: "Gratitude", color: "lavender" }
-    ]
-  },
-  {
-    title: "Pick your starter nudge",
-    desc: "Which tiny action would bring a smile today?",
-    choices: [
-      { label: "Take 3 deep breaths", icon: "🌬️" },
-      { label: "List 1 thing you're grateful for", icon: "💛" },
-      { label: "Stretch for 1 minute", icon: "🤸" },
-      { label: "Send a kind text", icon: "📩" },
-      { label: "Smile at a stranger", icon: "😊" }
     ]
   },
   {
@@ -123,7 +111,6 @@ const Onboarding = ({ onDone }: { onDone: () => void }) => {
           )}
         </motion.div>
       </AnimatePresence>
-      <div className="absolute left-0 right-0 bottom-0 h-2 bg-gradient-to-r from-lemon/80 via-peach/80 to-powder/80 rounded-b-3xl" />
     </div>
   );
 };
