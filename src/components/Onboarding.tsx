@@ -68,7 +68,7 @@ const Onboarding = ({ onDone }: { onDone: () => void }) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto rounded-3xl px-6 py-7 bg-white/60 shadow-joy backdrop-blur-md border border-peach/30 relative overflow-hidden">
+    <div className="w-full max-w-md mx-auto rounded-3xl px-6 py-7 bg-white/80 shadow-joy backdrop-blur-md border border-peach/30 relative overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={stepIdx}
@@ -83,10 +83,10 @@ const Onboarding = ({ onDone }: { onDone: () => void }) => {
                 <JoyIcon size={64} />
               </motion.div>
             )}
-            <h1 className="text-3xl font-nunito font-bold text-peach drop-shadow-sm mb-1">
+            <h1 className="text-3xl font-nunito font-bold text-heading drop-shadow-sm mb-1">
               {current.title}
             </h1>
-            <p className="text-lg text-gray-700 font-lato mb-4">{current.desc}</p>
+            <p className="text-lg font-lato mb-4 text-gray-800">{current.desc}</p>
           </div>
           {/* Step choices */}
           {current.choices && (
@@ -99,7 +99,7 @@ const Onboarding = ({ onDone }: { onDone: () => void }) => {
                   variants={chipVariants}
                   initial="rest"
                   animate="rest"
-                  className={`rounded-xl px-4 py-2 bg-${choice.color ?? "lemon"}/80 border-2 border-white font-semibold font-nunito text-lg transition-all shadow group`}
+                  className={`rounded-xl px-4 py-2 bg-${choice.color ?? "lemon"}/90 border-2 border-white font-semibold font-nunito text-lg transition-all shadow group text-gray-900`}
                   onClick={() => handleSelect(choice.label)}
                   type="button"
                   style={choice.icon ? { fontSize: 28 } : {}}
@@ -123,7 +123,7 @@ const Onboarding = ({ onDone }: { onDone: () => void }) => {
           )}
         </motion.div>
       </AnimatePresence>
-      <div className="absolute left-0 right-0 bottom-0 h-2 bg-gradient-to-r from-lemon/70 via-peach/70 to-powder/70 rounded-b-3xl" />
+      <div className="absolute left-0 right-0 bottom-0 h-2 bg-gradient-to-r from-lemon/80 via-peach/80 to-powder/80 rounded-b-3xl" />
     </div>
   );
 };

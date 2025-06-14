@@ -39,10 +39,10 @@ export default function JoyDashboard() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -30, opacity: 0 }}
             transition={{ type: "spring", stiffness: 380, damping: 48 }}
-            className="bg-white/80 px-6 py-10 rounded-3xl shadow-joy border border-peach/20 flex flex-col items-center"
+            className="bg-white/90 px-6 py-10 rounded-3xl shadow-joy border border-peach/20 flex flex-col items-center"
           >
             <JoyIcon size={56} />
-            <h2 className="font-nunito text-2xl mt-2 mb-4 text-mint/95 font-semibold">
+            <h2 className="font-nunito text-2xl mt-2 mb-4 text-heading font-semibold">
               {prompts[idx].nudge}
             </h2>
             <AnimatedButton onClick={completeNudge} text="Complete Nudge" rounded />

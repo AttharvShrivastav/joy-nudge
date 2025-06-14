@@ -34,6 +34,11 @@ export default {
         joyblue: "#aad6f6",
         joypink: "#FFD6EB",
         joygreen: "#C7F5D9",
+        heading: "#252525",
+        "body": "#22292f",
+        "gray-900": "#18181b",
+        "gray-700": "#374151",
+        "gray-500": "#6b7280",
       },
       backgroundImage: {
         'joy-gradient': 'linear-gradient(135deg, #FFFACD 0%, #FFDDAA 50%, #B0E0E6 100%)',
