@@ -115,10 +115,10 @@ export default function HomeScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-joy-white pb-20 px-4">
+    <div className="min-h-screen bg-joy-white pb-20 px-4 relative">
       <div className="max-w-md mx-auto pt-8 relative">
         {/* Pixelated Avatar in top right */}
-        <div className="absolute top-0 right-0 z-10">
+        <div className="absolute top-0 right-0 z-20">
           <PixelAvatar size="md" />
         </div>
         
@@ -151,42 +151,44 @@ export default function HomeScreen() {
         </div>
 
         {/* MAIN NUDGE CARD */}
-        <Celebration show={celebrating} />
-        {!celebrating && (
-          <div
-            className="joy-card p-6 text-center animate-fade-in"
-            style={{ minHeight: 340 }}
-            data-tutorial="current-nudge"
-          >
-            <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
-              {currentPrompt.nudge}
-            </h2>
-            <p className="text-joy-steel-blue font-lato mb-6 leading-relaxed">
-              {currentPrompt.description}
-            </p>
-            {!isEngaged ? (
-              <button
-                onClick={handleEngage}
-                className="joy-button-primary w-full text-lg mt-3"
-              >
-                Engage
-              </button>
-            ) : (
-              <InteractiveNudge
-                nudge={currentPrompt}
-                onComplete={handleComplete}
-              />
-            )}
-          </div>
-        )}
-        {celebrating && (
-          <div className="joy-card p-8 text-center animate-fade-in">
-            <div className="text-4xl mb-4">🌟</div>
-            <div className="joy-script text-2xl">
-              {currentPrompt.affirmation}
+        <div className="relative z-10">
+          <Celebration show={celebrating} />
+          {!celebrating && (
+            <div
+              className="joy-card p-6 text-center animate-fade-in"
+              style={{ minHeight: 340 }}
+              data-tutorial="current-nudge"
+            >
+              <h2 className="text-2xl font-nunito font-bold text-joy-dark-blue mb-2">
+                {currentPrompt.nudge}
+              </h2>
+              <p className="text-joy-steel-blue font-lato mb-6 leading-relaxed">
+                {currentPrompt.description}
+              </p>
+              {!isEngaged ? (
+                <button
+                  onClick={handleEngage}
+                  className="joy-button-primary w-full text-lg mt-3"
+                >
+                  Engage
+                </button>
+              ) : (
+                <InteractiveNudge
+                  nudge={currentPrompt}
+                  onComplete={handleComplete}
+                />
+              )}
             </div>
-          </div>
-        )}
+          )}
+          {celebrating && (
+            <div className="joy-card p-8 text-center animate-fade-in">
+              <div className="text-4xl mb-4">🌟</div>
+              <div className="joy-script text-2xl">
+                {currentPrompt.affirmation}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tutorial Modal */}

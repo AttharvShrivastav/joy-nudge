@@ -94,7 +94,7 @@ export default function Tutorial({ onComplete, onSkip }: TutorialProps) {
     visible: { 
       scale: 1, 
       opacity: 1,
-      transition: { duration: 0.3, type: "spring", stiffness: 300 }
+      transition: { duration: 0.3, type: "spring" as const, stiffness: 300 }
     },
     exit: { 
       scale: 0.8, 
@@ -109,7 +109,7 @@ export default function Tutorial({ onComplete, onSkip }: TutorialProps) {
       opacity: 1, 
       y: 0, 
       scale: 1,
-      transition: { duration: 0.4, type: "spring", stiffness: 300, damping: 25 }
+      transition: { duration: 0.4, type: "spring" as const, stiffness: 300, damping: 25 }
     },
     exit: { 
       opacity: 0, 
@@ -122,7 +122,7 @@ export default function Tutorial({ onComplete, onSkip }: TutorialProps) {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50"
+        className="fixed inset-0 z-40"
         variants={overlayVariants}
         initial="hidden"
         animate="visible"
