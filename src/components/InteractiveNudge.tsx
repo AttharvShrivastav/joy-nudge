@@ -30,15 +30,30 @@ export default function InteractiveNudge({ nudge, onComplete }: InteractiveNudge
       setCheckedItems(new Array(nudge.items.length).fill(false));
     }
   }, [nudge.type, nudge.items]);
+
+  // Save reflection to localStorage
+  const saveReflection = (text: string) => {
+    const reflections = JSON.parse(localStorage.getItem('joyReflections') || '[]');
+    reflections.push({
+      id: Date.now(),
+      nudgeTitle: nudge.nudge,
+      reflection: text,
+      date: new Date().toISOString()
+    });
+    localStorage.setItem('joyReflections', JSON.stringify(reflections));
+  };
   
-  // Breathing guide
+  // Enhanced breathing guide with dynamic animation
   if (nudge.type === "breathe") {
-    const phases = ["Inhale", "Hold", "Exhale"];
-    const phaseDurations = [4000, 2000, 4000];
+    const phases = [
+      { name: "Inhale", duration: 4000, scale: 1.4 },
+      { name: "Hold", duration: 3000, scale: 1.4 },
+      { name: "Exhale", duration: 4000, scale: 1.0 }
+    ];
     const totalCycles = nudge.duration || 3;
     
     useEffect(() => {
-      const currentPhaseDuration = phaseDurations[currentPhase % 3];
+      const currentPhaseDuration = phases[currentPhase % 3].duration;
       const timer = setTimeout(() => {
         if (Math.floor(currentPhase / 3) >= totalCycles) {
           onComplete();
@@ -52,6 +67,7 @@ export default function InteractiveNudge({ nudge, onComplete }: InteractiveNudge
     
     const currentCycle = Math.floor(currentPhase / 3) + 1;
     const phaseInCycle = currentPhase % 3;
+    const currentPhaseData = phases[phaseInCycle];
     
     return (
       <div className="joy-card p-8 text-center">
@@ -61,14 +77,17 @@ export default function InteractiveNudge({ nudge, onComplete }: InteractiveNudge
         
         <div className="mb-8">
           <motion.div
-            className="w-32 h-32 mx-auto bg-joy-light-blue/30 rounded-full flex items-center justify-center border-4 border-joy-steel-blue/20"
+            className="w-32 h-32 mx-auto bg-gradient-to-br from-joy-coral/20 to-joy-steel-blue/20 rounded-full flex items-center justify-center border-4 border-joy-steel-blue/30"
             animate={{
-              scale: phaseInCycle === 0 ? [1, 1.3, 1.3] : phaseInCycle === 1 ? 1.3 : [1.3, 1, 1],
+              scale: currentPhaseData.scale,
             }}
-            transition={{ duration: phaseDurations[phaseInCycle] / 1000, ease: "easeInOut" }}
+            transition={{ 
+              duration: currentPhaseData.duration / 1000, 
+              ease: phaseInCycle === 1 ? "linear" : "easeInOut"
+            }}
           >
             <span className="text-joy-steel-blue text-xl font-nunito font-semibold">
-              {phases[phaseInCycle]}
+              {currentPhaseData.name}
             </span>
           </motion.div>
         </div>
@@ -176,6 +195,7 @@ export default function InteractiveNudge({ nudge, onComplete }: InteractiveNudge
   if (nudge.type === "reflective") {
     const handleSave = () => {
       if (reflection.trim()) {
+        saveReflection(reflection.trim());
         onComplete();
       }
     };
