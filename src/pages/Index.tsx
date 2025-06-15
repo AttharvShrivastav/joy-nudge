@@ -8,7 +8,6 @@ import HomeScreen from "@/components/HomeScreen";
 import DiscoverScreen from "@/components/DiscoverScreen";
 import GardenScreen from "@/components/GardenScreen";
 import SettingsScreen from "@/components/SettingsScreen";
-import PixelAvatar from "@/components/PixelAvatar";
 import LoadingScreen from "@/components/LoadingScreen";
 
 const Index = () => {
@@ -53,10 +52,6 @@ const Index = () => {
     }
   };
 
-  const handleAvatarClick = () => {
-    setActiveTab('settings');
-  };
-
   return (
     <div className="min-h-screen w-full bg-joy-white">
       <AnimatePresence>
@@ -69,16 +64,6 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Pixel Avatar in top right corner */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="absolute top-4 right-4 z-50"
-          >
-            <PixelAvatar onClick={handleAvatarClick} />
-          </motion.div>
-          
           {renderActiveScreen()}
           <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
         </motion.div>
