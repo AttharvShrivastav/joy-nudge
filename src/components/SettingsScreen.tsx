@@ -7,6 +7,7 @@ import { Bell, Moon, Palette, User, Shield, Heart, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AvatarSelector from "./AvatarSelector";
+import AudioSettings from "./settings/AudioSettings";
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
@@ -25,7 +26,6 @@ export default function SettingsScreen() {
     quietHours: false,
     darkMode: false,
     nudgeFrequency: 'daily',
-    soundEnabled: true,
   });
 
   useEffect(() => {
@@ -201,6 +201,11 @@ export default function SettingsScreen() {
           )}
         </div>
 
+        {/* Audio Settings Section */}
+        <div className="joy-card p-6 mb-6">
+          <AudioSettings />
+        </div>
+
         {/* Notifications Section */}
         <div className="joy-card p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
@@ -228,17 +233,6 @@ export default function SettingsScreen() {
               <Switch
                 checked={settings.quietHours}
                 onCheckedChange={(checked) => handleSettingChange('quietHours', checked)}
-              />
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="font-lato font-medium text-joy-dark-blue">Sound</div>
-                <div className="text-sm text-joy-steel-blue">Play notification sounds</div>
-              </div>
-              <Switch
-                checked={settings.soundEnabled}
-                onCheckedChange={(checked) => handleSettingChange('soundEnabled', checked)}
               />
             </div>
           </div>
