@@ -5,7 +5,7 @@ import { useAudioSettings } from '@/hooks/useAudioSettings';
 import { useAudioManager } from '@/hooks/useAudioManager';
 
 export default function AudioSettings() {
-  const { settings, setMasterVolume, toggleMusic, toggleSoundEffects } = useAudioSettings();
+  const { settings, loading, setMasterVolume, toggleMusic, toggleSoundEffects } = useAudioSettings();
   const { playSound } = useAudioManager();
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,6 +23,19 @@ export default function AudioSettings() {
     toggleSoundEffects();
     playSound('toggle');
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-nunito font-semibold text-joy-dark-blue mb-4">
+            Audio Settings
+          </h3>
+        </div>
+        <div className="text-center text-joy-steel-blue">Loading audio settings...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
