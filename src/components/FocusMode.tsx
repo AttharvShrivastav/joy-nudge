@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Square, Volume2, VolumeX, X } from 'lucide-react';
@@ -23,6 +24,34 @@ export default function FocusMode({ onClose }: FocusModeProps) {
   const audioContextRef = useRef<AudioContext | null>(null);
   
   const { playSound: playAudioSound, playBackgroundMusic, stopBackgroundMusic, initializeAudio } = useAudioManager();
+
+  const handleSessionComplete = async () => {
+    setIsActive(false);
+    playAudioSound('focus_end');
+    stopBackgroundMusic();
+    
+    if (sessionStartTime) {
+      await logSession(true);
+    }
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const message = isBreak ? 'Break time is over! Ready to focus?' : 'Focus session complete! Time for a break.';
+      new Notification('Joy Nudge Focus', {
+        body: message,
+        icon: '/favicon.ico'
+      });
+    }
+
+    if (!isBreak) {
+      setIsBreak(true);
+      setTimeLeft(breakDuration * 60);
+    } else {
+      setIsBreak(false);
+      setTimeLeft(workDuration * 60);
+    }
+    
+    setSessionStartTime(null);
+  };
 
   useEffect(() => {
     if (isActive && !isPaused) {
@@ -95,34 +124,6 @@ export default function FocusMode({ onClose }: FocusModeProps) {
     setSessionStartTime(null);
   };
 
-  const handleSessionComplete = async () => {
-    setIsActive(false);
-    playAudioSound('focus_end');
-    stopBackgroundMusic();
-    
-    if (sessionStartTime) {
-      await logSession(true);
-    }
-
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const message = isBreak ? 'Break time is over! Ready to focus?' : 'Focus session complete! Time for a break.';
-      new Notification('Joy Nudge Focus', {
-        body: message,
-        icon: '/favicon.ico'
-      });
-    }
-
-    if (!isBreak) {
-      setIsBreak(true);
-      setTimeLeft(breakDuration * 60);
-    } else {
-      setIsBreak(false);
-      setTimeLeft(workDuration * 60);
-    }
-    
-    setSessionStartTime(null);
-  };
-
   const logSession = async (isCompleted: boolean) => {
     if (!user || !sessionStartTime) return;
     
@@ -140,34 +141,6 @@ export default function FocusMode({ onClose }: FocusModeProps) {
     } catch (error) {
       console.error('Error logging focus session:', error);
     }
-  };
-
-  const handleSessionComplete = async () => {
-    setIsActive(false);
-    playAudioSound('focus_end');
-    stopBackgroundMusic();
-    
-    if (sessionStartTime) {
-      await logSession(true);
-    }
-
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const message = isBreak ? 'Break time is over! Ready to focus?' : 'Focus session complete! Time for a break.';
-      new Notification('Joy Nudge Focus', {
-        body: message,
-        icon: '/favicon.ico'
-      });
-    }
-
-    if (!isBreak) {
-      setIsBreak(true);
-      setTimeLeft(breakDuration * 60);
-    } else {
-      setIsBreak(false);
-      setTimeLeft(workDuration * 60);
-    }
-    
-    setSessionStartTime(null);
   };
 
   const playSound = (type: 'start' | 'pause' | 'complete') => {
