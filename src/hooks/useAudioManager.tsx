@@ -22,15 +22,16 @@ export function useAudioManager() {
       if (AudioContext) {
         audioContextRef.current.context = new AudioContext();
         audioContextRef.current.initialized = true;
+        console.log('Audio context initialized');
       }
     } catch (error) {
       console.log('Audio context initialization failed:', error);
     }
   }, []);
 
-  // Play sound effects
+  // Play sound effects with proper settings check
   const playSound = useCallback((type: string, customVolume?: number) => {
-    // Check if sound effects are enabled
+    // Always check if sound effects are enabled before playing any sound
     if (!settings.soundEffectsEnabled) {
       console.log('Sound effects disabled, skipping sound:', type);
       return;
@@ -39,10 +40,14 @@ export function useAudioManager() {
     initializeAudio();
     
     const audioContext = audioContextRef.current.context;
-    if (!audioContext) return;
+    if (!audioContext) {
+      console.log('Audio context not available');
+      return;
+    }
 
     try {
       const volume = (customVolume ?? 1) * settings.masterVolume;
+      console.log(`Playing sound: ${type}, volume: ${volume}, effects enabled: ${settings.soundEffectsEnabled}`);
       
       const createTone = (frequency: number, duration: number, waveType: OscillatorType = 'sine') => {
         const oscillator = audioContext.createOscillator();
@@ -126,18 +131,21 @@ export function useAudioManager() {
     }
   }, [settings.soundEffectsEnabled, settings.masterVolume, initializeAudio]);
 
-  // Background music management
+  // Background music management with proper settings check
   const playBackgroundMusic = useCallback((track: 'home' | 'garden' | 'focus', loop: boolean = true) => {
-    // Check if background music is enabled
+    // Always check if background music is enabled before starting
     if (!settings.musicEnabled) {
       console.log('Background music disabled, not playing:', track);
       return;
     }
 
+    console.log(`Starting background music: ${track}, music enabled: ${settings.musicEnabled}`);
+
     // Stop any existing background music first
     stopBackgroundMusic();
 
     const playAmbientTones = () => {
+      // Double-check music is still enabled during playback
       if (!settings.musicEnabled) {
         console.log('Background music disabled during playback, stopping');
         return;
@@ -186,13 +194,19 @@ export function useAudioManager() {
           break;
       }
 
+      // Only schedule next iteration if music is still enabled and loop is true
       if (loop && settings.musicEnabled) {
         ambientIntervalRef.current = setTimeout(() => playAmbientTones(), 15000);
       }
     };
 
     initializeAudio().then(() => {
-      setTimeout(playAmbientTones, 1000);
+      // Add a small delay and check again before starting
+      setTimeout(() => {
+        if (settings.musicEnabled) {
+          playAmbientTones();
+        }
+      }, 1000);
     });
   }, [settings.musicEnabled, settings.masterVolume, initializeAudio]);
 
@@ -211,9 +225,10 @@ export function useAudioManager() {
     console.log('Background music stopped');
   }, []);
 
-  // Stop background music when music is disabled
+  // Stop background music immediately when music is disabled
   useEffect(() => {
     if (!settings.musicEnabled) {
+      console.log('Music disabled via settings, stopping all background music');
       stopBackgroundMusic();
     }
   }, [settings.musicEnabled, stopBackgroundMusic]);
