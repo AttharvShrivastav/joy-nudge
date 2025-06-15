@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Flame } from "lucide-react";
+import { Flame, Leaf } from "lucide-react";
 
 interface StreakDisplayProps {
   streak: number;
@@ -24,6 +24,35 @@ function PlantIcon({ className = "" }: { className?: string }) {
 }
 
 export default function StreakDisplay({ streak }: StreakDisplayProps) {
+  // When streak is 0, show "start fresh" encouragement
+  if (streak === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="flex justify-center items-center mb-6"
+      >
+        <div className="flex items-center gap-3 bg-joy-coral px-6 py-3 rounded-full shadow-lg border-2 border-white/50 relative overflow-hidden min-w-[298px] max-w-full">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10" />
+          {/* Icon row: leaf - 0 - flame */}
+          <div className="flex items-center justify-center gap-4 relative z-10">
+            <Leaf className="text-joy-steel-blue w-7 h-7" strokeWidth={2.2} />
+            <span className="font-nunito font-bold text-3xl text-joy-dark-blue drop-shadow-sm" style={{ minWidth: 30, textAlign: "center" }}>0</span>
+            <Flame className="text-joy-steel-blue w-7 h-7" strokeWidth={2.2} />
+          </div>
+          {/* Message below */}
+          <div className="absolute left-0 right-0 bottom-3 flex justify-center">
+            <span className="font-nunito font-semibold text-lg md:text-xl text-joy-coral mt-8 mb-0 drop-shadow-sm text-center block" style={{ marginTop: "1.8rem" }}>
+              It&apos;s okay,<br/>start fresh!
+            </span>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // All other streak logic as before
   const getStreakDisplay = () => {
     if (streak >= 30) {
       return { icon: <span role="img" aria-label="trophy">🏆</span>, color: "from-joy-coral via-orange-400 to-red-500", message: "Streak Master!" };
@@ -38,8 +67,7 @@ export default function StreakDisplay({ streak }: StreakDisplayProps) {
     return { icon: <PlantIcon />, color: "from-joy-coral via-orange-300 to-red-300", message: "Getting started!" };
   };
 
-  // Do not display <1 as streak, never show zero to user if they've started
-  // If streak==0, display 1 for positive UI feedback (unless backend expects 0 for a totally new user)
+  // NEVER show <1 as streak (if user has started)
   const streakDisplayNumber = streak && streak > 0 ? streak : 1;
   const streakDisplay = getStreakDisplay();
 
@@ -50,7 +78,7 @@ export default function StreakDisplay({ streak }: StreakDisplayProps) {
       transition={{ delay: 0.2 }}
       className="flex justify-center items-center mb-6"
     >
-      <div className="flex items-center gap-3 bg-joy-coral px-6 py-3 rounded-full shadow-lg border-2 border-white/50 relative overflow-hidden">
+      <div className="flex items-center gap-3 bg-joy-coral px-6 py-3 rounded-full shadow-lg border-2 border-white/50 relative overflow-hidden min-w-[298px] max-w-full">
         <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10"></div>
         <div className="text-2xl relative z-10 flex items-center">
           {streakDisplay.icon}
@@ -64,3 +92,4 @@ export default function StreakDisplay({ streak }: StreakDisplayProps) {
     </motion.div>
   );
 }
+
