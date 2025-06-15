@@ -6,6 +6,7 @@ import { useNudgeLikes } from "@/hooks/useNudgeLikes";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { getRandomFallbackNudge } from "@/data/fallbackNudges";
+import { useAudioManager } from "@/hooks/useAudioManager";
 
 const categories = [
   { id: 'all', name: 'All', icon: Sparkles, color: 'text-joy-coral' },
@@ -22,49 +23,7 @@ export default function DiscoverScreen() {
   const { user } = useAuth();
   const { toggleLike, isLiked } = useNudgeLikes();
   const { toast } = useToast();
-
-  // Sound effect function
-  const playSound = (type: string) => {
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      const createTone = (frequency: number, duration: number, volume: number = 0.3) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + duration);
-      };
-
-      switch (type) {
-        case 'button_press':
-          createTone(800, 0.1, 0.2);
-          break;
-        case 'like':
-          createTone(880, 0.15, 0.2);
-          setTimeout(() => createTone(1108, 0.15, 0.2), 50);
-          break;
-        case 'filter':
-          createTone(440, 0.15, 0.25);
-          break;
-        case 'refresh':
-          createTone(660, 0.2, 0.25);
-          break;
-      }
-    } catch (error) {
-      console.log('Audio not available:', error);
-    }
-  };
+  const { playSound } = useAudioManager();
 
   useEffect(() => {
     fetchNudges();
@@ -100,12 +59,12 @@ export default function DiscoverScreen() {
   };
 
   const handleCategoryChange = (categoryId: string) => {
-    playSound('filter');
+    playSound('button_click');
     setSelectedCategory(categoryId);
   };
 
   const handleRefresh = () => {
-    playSound('refresh');
+    playSound('button_click');
     fetchNudges();
   };
 
@@ -285,7 +244,7 @@ export default function DiscoverScreen() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => {
-                        playSound('button_press');
+                        playSound('button_click');
                         // Add to queue logic here
                       }}
                       className="joy-button-primary text-sm px-4 py-2"

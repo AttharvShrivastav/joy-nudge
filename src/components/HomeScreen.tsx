@@ -18,6 +18,7 @@ import FocusModeButton from "./home/FocusModeButton";
 import MainNudgeCard from "./home/MainNudgeCard";
 import MoreNudgesSection from "./home/MoreNudgesSection";
 import { useSoundEffects } from "./home/useSoundEffects";
+import { useAudioManager } from "@/hooks/useAudioManager";
 
 const prompts = [
   {
@@ -89,6 +90,7 @@ export default function HomeScreen() {
   const { gardenData } = useGardenData();
   const { toast } = useToast();
   const { playSound } = useSoundEffects();
+  const { playBackgroundMusic, stopBackgroundMusic, initializeAudio } = useAudioManager();
 
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'there';
 
@@ -136,6 +138,26 @@ export default function HomeScreen() {
     }
   }, [user, tutorialLoading, gardenData.todaysMood]);
 
+  // Initialize audio and start background music when component mounts
+  useEffect(() => {
+    const startAudio = async () => {
+      await initializeAudio();
+      // Start subtle background music for home screen
+      setTimeout(() => {
+        playBackgroundMusic('home', true);
+      }, 1000);
+    };
+
+    if (user && !tutorialLoading && !isInitialLoading) {
+      startAudio();
+    }
+
+    // Cleanup function to stop background music when component unmounts
+    return () => {
+      stopBackgroundMusic();
+    };
+  }, [user, tutorialLoading, isInitialLoading, initializeAudio, playBackgroundMusic, stopBackgroundMusic]);
+
   const handleMoodSelect = async (mood: string) => {
     playSound('mood_select');
     setCurrentMood(mood);
@@ -167,7 +189,7 @@ export default function HomeScreen() {
   };
 
   const handleSkip = () => {
-    playSound('button_press');
+    playSound('button_click');
     if (isFirstTime) {
       localStorage.setItem('hasSeenBreathingNudge', 'true');
       setIsFirstTime(false);
@@ -182,7 +204,7 @@ export default function HomeScreen() {
   };
   
   const handleSkipBreathing = () => {
-    playSound('button_press');
+    playSound('button_click');
     if (isFirstTime) {
       localStorage.setItem('hasSeenBreathingNudge', 'true');
       setIsFirstTime(false);

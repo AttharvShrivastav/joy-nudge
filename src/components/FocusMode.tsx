@@ -1,9 +1,9 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Square, Volume2, VolumeX, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useAudioManager } from '@/hooks/useAudioManager';
 
 interface FocusModeProps {
   onClose: () => void;
@@ -21,6 +21,8 @@ export default function FocusMode({ onClose }: FocusModeProps) {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  
+  const { playSound: playAudioSound, playBackgroundMusic, stopBackgroundMusic, initializeAudio } = useAudioManager();
 
   useEffect(() => {
     if (isActive && !isPaused) {
@@ -50,7 +52,14 @@ export default function FocusMode({ onClose }: FocusModeProps) {
     setIsActive(true);
     setIsPaused(false);
     setSessionStartTime(new Date());
-    playSound('start');
+    playAudioSound('focus_start');
+    
+    // Start focus background ambient sounds
+    initializeAudio().then(() => {
+      setTimeout(() => {
+        playBackgroundMusic('focus', true);
+      }, 500);
+    });
     
     if ('Notification' in window) {
       Notification.requestPermission();
@@ -59,13 +68,22 @@ export default function FocusMode({ onClose }: FocusModeProps) {
 
   const handlePause = () => {
     setIsPaused(!isPaused);
-    playSound('pause');
+    playAudioSound('button_click');
+    
+    if (isPaused) {
+      // Resume background music
+      playBackgroundMusic('focus', true);
+    } else {
+      // Pause background music
+      stopBackgroundMusic();
+    }
   };
 
   const handleStop = () => {
     if (sessionStartTime && isActive) {
       logSession(false);
     }
+    stopBackgroundMusic();
     resetSession();
   };
 
@@ -79,7 +97,8 @@ export default function FocusMode({ onClose }: FocusModeProps) {
 
   const handleSessionComplete = async () => {
     setIsActive(false);
-    playSound('complete');
+    playAudioSound('focus_end');
+    stopBackgroundMusic();
     
     if (sessionStartTime) {
       await logSession(true);
@@ -123,40 +142,48 @@ export default function FocusMode({ onClose }: FocusModeProps) {
     }
   };
 
+  const handleSessionComplete = async () => {
+    setIsActive(false);
+    playAudioSound('focus_end');
+    stopBackgroundMusic();
+    
+    if (sessionStartTime) {
+      await logSession(true);
+    }
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const message = isBreak ? 'Break time is over! Ready to focus?' : 'Focus session complete! Time for a break.';
+      new Notification('Joy Nudge Focus', {
+        body: message,
+        icon: '/favicon.ico'
+      });
+    }
+
+    if (!isBreak) {
+      setIsBreak(true);
+      setTimeLeft(breakDuration * 60);
+    } else {
+      setIsBreak(false);
+      setTimeLeft(workDuration * 60);
+    }
+    
+    setSessionStartTime(null);
+  };
+
   const playSound = (type: 'start' | 'pause' | 'complete') => {
     if (!soundEnabled) return;
     
-    try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContext();
-      }
-      
-      const audioContext = audioContextRef.current;
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      switch (type) {
-        case 'start':
-          oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-          break;
-        case 'pause':
-          oscillator.frequency.setValueAtTime(330, audioContext.currentTime);
-          break;
-        case 'complete':
-          oscillator.frequency.setValueAtTime(523, audioContext.currentTime);
-          break;
-      }
-      
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
-    } catch (error) {
-      console.error('Audio playback failed:', error);
+    // Use the new audio manager instead of creating audio context here
+    switch (type) {
+      case 'start':
+        playAudioSound('focus_start');
+        break;
+      case 'pause':
+        playAudioSound('button_click');
+        break;
+      case 'complete':
+        playAudioSound('focus_end');
+        break;
     }
   };
 

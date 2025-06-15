@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useStreakData } from "@/hooks/useStreakData";
+import { useAudioManager } from "@/hooks/useAudioManager";
 import GardenTabs from "./garden/GardenTabs";
 import GardenView from "./garden/GardenView";
 import StatsView from "./garden/StatsView";
@@ -11,11 +12,28 @@ export default function GardenScreen() {
   const [activeTab, setActiveTab] = useState<'garden' | 'stats' | 'achievements' | 'reflections'>('garden');
   const [reflections, setReflections] = useState<any[]>([]);
   const { streakData, loading } = useStreakData();
+  const { playBackgroundMusic, stopBackgroundMusic, initializeAudio } = useAudioManager();
 
   useEffect(() => {
     const savedReflections = JSON.parse(localStorage.getItem('joyReflections') || '[]');
     setReflections(savedReflections);
   }, []);
+
+  // Start garden ambient sounds when component mounts
+  useEffect(() => {
+    const startGardenAudio = async () => {
+      await initializeAudio();
+      setTimeout(() => {
+        playBackgroundMusic('garden', true);
+      }, 500);
+    };
+
+    startGardenAudio();
+
+    return () => {
+      stopBackgroundMusic();
+    };
+  }, [initializeAudio, playBackgroundMusic, stopBackgroundMusic]);
 
   return (
     <div className="min-h-screen bg-joy-white pb-20 px-4">
