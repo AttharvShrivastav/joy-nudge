@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useEffect } from 'react';
 import { useAudioSettings } from './useAudioSettings';
 
@@ -10,6 +11,7 @@ export function useAudioManager() {
   const { settings } = useAudioSettings();
   const audioContextRef = useRef<AudioContextType>({ initialized: false });
   const backgroundMusicRef = useRef<HTMLAudioElement | null>(null);
+  const ambientIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize audio context on first user interaction
   const initializeAudio = useCallback(async () => {
@@ -28,7 +30,11 @@ export function useAudioManager() {
 
   // Play sound effects
   const playSound = useCallback((type: string, customVolume?: number) => {
-    if (!settings.soundEffectsEnabled) return;
+    // Check if sound effects are enabled
+    if (!settings.soundEffectsEnabled) {
+      console.log('Sound effects disabled, skipping sound:', type);
+      return;
+    }
     
     initializeAudio();
     
@@ -58,30 +64,26 @@ export function useAudioManager() {
 
       switch (type) {
         case 'welcome':
-          // Soft, welcoming chime for login/signup
           createTone(523, 0.3, 'sine'); // C5
           setTimeout(() => createTone(659, 0.3, 'sine'), 150); // E5
           setTimeout(() => createTone(784, 0.4, 'sine'), 300); // G5
           break;
         
         case 'button_click':
-          // Gentle button click
+        case 'button_press':
           createTone(800, 0.08, 'sine');
           break;
         
         case 'toggle':
-          // Soft toggle sound
           createTone(660, 0.12, 'sine');
           break;
         
         case 'error':
-          // Very soft, non-alarming error sound
           createTone(220, 0.2, 'sine');
           setTimeout(() => createTone(196, 0.2, 'sine'), 100);
           break;
         
         case 'success':
-          // Delightful success chime
           createTone(523, 0.2, 'sine');
           setTimeout(() => createTone(659, 0.2, 'sine'), 100);
           setTimeout(() => createTone(784, 0.3, 'sine'), 200);
@@ -98,7 +100,6 @@ export function useAudioManager() {
           setTimeout(() => createTone(523, 0.4, 'sine'), 300);
           break;
         
-        // Keep existing sound effects for backward compatibility
         case 'celebration':
         case 'completion':
           createTone(523, 0.3, 'sine');
@@ -127,12 +128,20 @@ export function useAudioManager() {
 
   // Background music management
   const playBackgroundMusic = useCallback((track: 'home' | 'garden' | 'focus', loop: boolean = true) => {
-    if (!settings.musicEnabled) return;
+    // Check if background music is enabled
+    if (!settings.musicEnabled) {
+      console.log('Background music disabled, not playing:', track);
+      return;
+    }
 
-    // For now, we'll create ambient tones instead of loading external files
-    // In production, you would load actual audio files here
+    // Stop any existing background music first
+    stopBackgroundMusic();
+
     const playAmbientTones = () => {
-      if (!settings.musicEnabled) return;
+      if (!settings.musicEnabled) {
+        console.log('Background music disabled during playback, stopping');
+        return;
+      }
       
       const audioContext = audioContextRef.current.context;
       if (!audioContext) return;
@@ -160,28 +169,25 @@ export function useAudioManager() {
 
       switch (track) {
         case 'home':
-          // Gentle, uplifting ambient tones
           createAmbientTone(220, 8);
           setTimeout(() => createAmbientTone(277, 6), 2000);
           setTimeout(() => createAmbientTone(330, 7), 4000);
           break;
         
         case 'garden':
-          // Nature-inspired ambient tones
           createAmbientTone(196, 10);
           setTimeout(() => createAmbientTone(247, 8), 3000);
           setTimeout(() => createAmbientTone(294, 6), 6000);
           break;
         
         case 'focus':
-          // Concentration-enhancing tones
           createAmbientTone(110, 12);
           setTimeout(() => createAmbientTone(138, 10), 4000);
           break;
       }
 
-      if (loop) {
-        setTimeout(() => playAmbientTones(), 15000);
+      if (loop && settings.musicEnabled) {
+        ambientIntervalRef.current = setTimeout(() => playAmbientTones(), 15000);
       }
     };
 
@@ -195,7 +201,22 @@ export function useAudioManager() {
       backgroundMusicRef.current.pause();
       backgroundMusicRef.current = null;
     }
+    
+    // Clear any ambient tone intervals
+    if (ambientIntervalRef.current) {
+      clearTimeout(ambientIntervalRef.current);
+      ambientIntervalRef.current = null;
+    }
+    
+    console.log('Background music stopped');
   }, []);
+
+  // Stop background music when music is disabled
+  useEffect(() => {
+    if (!settings.musicEnabled) {
+      stopBackgroundMusic();
+    }
+  }, [settings.musicEnabled, stopBackgroundMusic]);
 
   // Handle app visibility changes
   useEffect(() => {
@@ -207,6 +228,13 @@ export function useAudioManager() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [stopBackgroundMusic]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopBackgroundMusic();
+    };
   }, [stopBackgroundMusic]);
 
   return {

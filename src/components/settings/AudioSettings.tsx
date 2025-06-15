@@ -6,22 +6,35 @@ import { useAudioManager } from '@/hooks/useAudioManager';
 
 export default function AudioSettings() {
   const { settings, loading, setMasterVolume, toggleMusic, toggleSoundEffects } = useAudioSettings();
-  const { playSound } = useAudioManager();
+  const { playSound, stopBackgroundMusic } = useAudioManager();
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const volume = parseFloat(e.target.value);
     setMasterVolume(volume);
-    playSound('button_click');
+    // Only play sound if sound effects are enabled
+    if (settings.soundEffectsEnabled) {
+      playSound('button_click');
+    }
   };
 
   const handleMusicToggle = () => {
     toggleMusic();
-    playSound('toggle');
+    // Stop any playing background music when disabled
+    if (settings.musicEnabled) {
+      stopBackgroundMusic();
+    }
+    // Only play toggle sound if sound effects are enabled
+    if (settings.soundEffectsEnabled) {
+      playSound('toggle');
+    }
   };
 
   const handleSoundEffectsToggle = () => {
+    // Play the toggle sound before changing the setting (while still enabled)
+    if (settings.soundEffectsEnabled) {
+      playSound('toggle');
+    }
     toggleSoundEffects();
-    playSound('toggle');
   };
 
   if (loading) {
