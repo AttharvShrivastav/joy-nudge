@@ -1,6 +1,6 @@
+
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import JoyIcon from "./JoyIcon";
 import AnimatedButton from "./AnimatedButton";
 
 const steps = [
@@ -28,7 +28,7 @@ const steps = [
   },
   {
     title: "Ready for your first moment of joy?",
-    desc: "Let’s begin – you can always add/edit nudges later. 🌱"
+    desc: "Let's begin – you can always add/edit nudges later. 🌱"
   }
 ];
 
@@ -68,7 +68,11 @@ const Onboarding = ({ onDone }: { onDone: () => void }) => {
           <div className="flex flex-col items-center gap-2 mb-2">
             {stepIdx === 0 && (
               <motion.div initial={{ scale: 0.85 }} animate={{ scale: 1 }} className="mb-2">
-                <JoyIcon size={64} />
+                <img 
+                  src="/lovable-uploads/424186e2-de89-4a2a-a690-1d1d0f47bbe8.png" 
+                  alt="Joy Nudge" 
+                  className="w-16 h-16 rounded-full drop-shadow"
+                />
               </motion.div>
             )}
             <h1 className="text-3xl font-nunito font-bold text-heading drop-shadow-sm mb-1">
