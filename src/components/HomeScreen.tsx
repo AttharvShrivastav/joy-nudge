@@ -69,7 +69,7 @@ const breathingNudge = {
   duration: 3
 };
 
-export default function HomeScreen() {
+export default function HomeScreen({ onAvatarClick }: { onAvatarClick?: () => void }) {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [isEngaged, setIsEngaged] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
@@ -354,7 +354,7 @@ export default function HomeScreen() {
           )}
         </AnimatePresence>
 
-        <HomeHeader username={username} />
+        <HomeHeader username={username} onAvatarClick={onAvatarClick} />
         <StreakDisplay streak={displayStreak} />
         <FocusModeButton 
           onFocusClick={() => setShowFocusMode(true)} 

@@ -1,15 +1,13 @@
 
 import { motion } from "framer-motion";
 import PixelAvatar from "../PixelAvatar";
-import { useNavigate } from "react-router-dom";
 
 interface HomeHeaderProps {
   username: string;
+  onAvatarClick?: () => void;
 }
 
-export default function HomeHeader({ username }: HomeHeaderProps) {
-  const navigate = useNavigate();
-
+export default function HomeHeader({ username, onAvatarClick }: HomeHeaderProps) {
   const getGreeting = () => {
     const hour = new Date().getHours();
     let timeGreeting = '';
@@ -28,7 +26,6 @@ export default function HomeHeader({ username }: HomeHeaderProps) {
         transition={{ delay: 0.1 }}
         className="flex justify-between items-start mb-6"
       >
-        {/* Logo and Title removed */}
         <div />
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
@@ -36,7 +33,7 @@ export default function HomeHeader({ username }: HomeHeaderProps) {
           transition={{ delay: 0.3 }}
           className="z-30"
         >
-          <PixelAvatar size="md" onClick={() => navigate("/settings")} />
+          <PixelAvatar size="md" onClick={onAvatarClick} />
         </motion.div>
       </motion.div>
 

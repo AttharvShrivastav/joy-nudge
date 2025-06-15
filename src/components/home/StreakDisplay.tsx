@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Flame } from "lucide-react";
+import { Flame, Plus } from "lucide-react";
 
 interface StreakDisplayProps {
   streak: number;
@@ -17,7 +17,8 @@ export default function StreakDisplay({ streak }: StreakDisplayProps) {
     } else if (streak >= 3) {
       return { emoji: "⚡", color: "from-joy-coral via-orange-400 to-red-400", message: "Building momentum!" };
     }
-    return { emoji: "🌱", color: "from-joy-coral via-orange-300 to-red-300", message: "Getting started!" };
+    // Use Plus icon as a React component for "Getting started!"
+    return { emoji: null, color: "from-joy-coral via-orange-300 to-red-300", message: "Getting started!" };
   };
 
   const streakDisplay = getStreakDisplay();
@@ -31,8 +32,14 @@ export default function StreakDisplay({ streak }: StreakDisplayProps) {
     >
       <div className="flex items-center gap-3 bg-joy-coral px-6 py-3 rounded-full shadow-lg border-2 border-white/50 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10"></div>
-        
-        <div className="text-2xl relative z-10">{streakDisplay.emoji}</div>
+
+        <div className="text-2xl relative z-10">
+          {streakDisplay.emoji !== null ? (
+            streakDisplay.emoji
+          ) : (
+            <Plus className="w-6 h-6 text-white" />
+          )}
+        </div>
         <div className="text-center relative z-10">
           <div className="font-nunito font-bold text-2xl text-white drop-shadow-sm">{streak}</div>
           <div className="font-lato text-white text-xs opacity-90 drop-shadow-sm">{streakDisplay.message}</div>

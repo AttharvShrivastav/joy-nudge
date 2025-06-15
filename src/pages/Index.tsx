@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,10 +36,14 @@ const Index = () => {
     return <LoadingScreen isLoading={true} />;
   }
 
+  const handleAvatarClick = () => {
+    setActiveTab("settings");
+  };
+
   const renderActiveScreen = () => {
     switch (activeTab) {
       case 'home':
-        return <HomeScreen />;
+        return <HomeScreen onAvatarClick={handleAvatarClick} />;
       case 'discover':
         return <DiscoverScreen />;
       case 'garden':
@@ -48,7 +51,7 @@ const Index = () => {
       case 'settings':
         return <SettingsScreen />;
       default:
-        return <HomeScreen />;
+        return <HomeScreen onAvatarClick={handleAvatarClick} />;
     }
   };
 
