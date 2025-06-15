@@ -19,7 +19,7 @@ export default function AuthHeader({ isSignUp }: AuthHeaderProps) {
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
       >
-        <JoyIcon size={60} />
+        <JoyIcon size={80} />
       </motion.div>
       <h1 className="text-3xl font-nunito font-bold text-joy-dark-blue mb-2">
         {isSignUp ? 'Join Joy Nudge' : 'Welcome Back'}
