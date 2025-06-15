@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Square, Volume2, VolumeX, X } from 'lucide-react';
@@ -82,8 +83,12 @@ export default function FocusMode({ onClose }: FocusModeProps) {
     setSessionStartTime(new Date());
     playAudioSound('focus_start');
     
-    // Background music is now disabled - only sound effects
-    initializeAudio();
+    // Start focus background ambient sounds
+    initializeAudio().then(() => {
+      setTimeout(() => {
+        playBackgroundMusic('focus', true);
+      }, 500);
+    });
     
     if ('Notification' in window) {
       Notification.requestPermission();
@@ -94,7 +99,13 @@ export default function FocusMode({ onClose }: FocusModeProps) {
     setIsPaused(!isPaused);
     playAudioSound('button_click');
     
-    // Background music functionality removed - no need to pause/resume music
+    if (isPaused) {
+      // Resume background music
+      playBackgroundMusic('focus', true);
+    } else {
+      // Pause background music
+      stopBackgroundMusic();
+    }
   };
 
   const handleStop = () => {
