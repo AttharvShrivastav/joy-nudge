@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Square, Volume2, VolumeX, X } from 'lucide-react';
@@ -86,7 +85,7 @@ export default function FocusMode({ onClose }: FocusModeProps) {
     // Start focus background ambient sounds
     initializeAudio().then(() => {
       setTimeout(() => {
-        playBackgroundMusic('focus', true);
+        playBackgroundMusic();
       }, 500);
     });
     
@@ -101,7 +100,7 @@ export default function FocusMode({ onClose }: FocusModeProps) {
     
     if (isPaused) {
       // Resume background music
-      playBackgroundMusic('focus', true);
+      playBackgroundMusic();
     } else {
       // Pause background music
       stopBackgroundMusic();
