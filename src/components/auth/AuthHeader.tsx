@@ -1,6 +1,5 @@
 
 import { motion } from 'framer-motion';
-import JoyIcon from '@/components/JoyIcon';
 
 interface AuthHeaderProps {
   isSignUp: boolean;
@@ -19,7 +18,11 @@ export default function AuthHeader({ isSignUp }: AuthHeaderProps) {
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
       >
-        <JoyIcon size={80} />
+        <img 
+          src="/lovable-uploads/827da81c-1b3f-4ca6-9231-7d5660105e45.png" 
+          alt="Joy Nudge Mascot" 
+          className="w-20 h-20 drop-shadow"
+        />
       </motion.div>
       <h1 className="text-3xl font-nunito font-bold text-joy-dark-blue mb-2">
         {isSignUp ? 'Join Joy Nudge' : 'Welcome Back'}
