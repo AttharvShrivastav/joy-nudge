@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -15,27 +15,47 @@ const DEFAULT_SETTINGS: AudioSettings = {
   soundEffectsEnabled: true,
 };
 
+// --- Shared State Logic ---
+const settingsEvents = new EventTarget();
+
+let currentSettings: AudioSettings = DEFAULT_SETTINGS;
+
+// Load initial guest settings from localStorage
+try {
+  const savedSettings = localStorage.getItem('joyNudgeAudioSettings');
+  if (savedSettings) {
+    currentSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(savedSettings) };
+  }
+} catch (e) {
+  console.error("Failed to parse audio settings from localStorage", e);
+}
+
+const setSharedSettings = (newSettings: Partial<AudioSettings>) => {
+  currentSettings = { ...currentSettings, ...newSettings };
+  settingsEvents.dispatchEvent(new CustomEvent('settingsChange', { detail: currentSettings }));
+};
+// --- End Shared State Logic ---
+
 export function useAudioSettings() {
   const { user } = useAuth();
-  const [settings, setSettings] = useState<AudioSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<AudioSettings>(currentSettings);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      loadUserSettings();
-    } else {
-      // Load from localStorage for non-authenticated users
-      const savedSettings = localStorage.getItem('joyNudgeAudioSettings');
-      if (savedSettings) {
-        setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(savedSettings) });
-      }
-      setLoading(false);
-    }
-  }, [user]);
+    const handleSettingsChange = (event: Event) => {
+      const customEvent = event as CustomEvent<AudioSettings>;
+      setSettings(customEvent.detail);
+    };
+    settingsEvents.addEventListener('settingsChange', handleSettingsChange);
+    return () => {
+      settingsEvents.removeEventListener('settingsChange', handleSettingsChange);
+    };
+  }, []);
 
-  const loadUserSettings = async () => {
+  const loadUserSettings = useCallback(async () => {
     if (!user) return;
     
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('user_audio_settings')
@@ -44,34 +64,43 @@ export function useAudioSettings() {
         .maybeSingle();
 
       if (error) {
-        console.error('Error loading audio settings:', error);
-        setSettings(DEFAULT_SETTINGS);
-      } else if (data) {
-        setSettings({
+        throw error;
+      }
+      
+      if (data) {
+        setSharedSettings({
           masterVolume: parseFloat(data.master_volume.toString()),
           musicEnabled: data.music_enabled,
           soundEffectsEnabled: data.sound_effects_enabled,
         });
       } else {
-        // No settings found, create default settings
-        await createDefaultSettings();
+        await createDefaultSettings(user.id);
+        setSharedSettings(DEFAULT_SETTINGS);
       }
     } catch (error) {
       console.error('Error loading audio settings:', error);
-      setSettings(DEFAULT_SETTINGS);
+      setSharedSettings(DEFAULT_SETTINGS);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const createDefaultSettings = async () => {
-    if (!user) return;
+  useEffect(() => {
+    if (user) {
+      loadUserSettings();
+    } else {
+      // For guests, settings are already loaded. Ensure state is consistent.
+      setSharedSettings(currentSettings);
+      setLoading(false);
+    }
+  }, [user, loadUserSettings]);
 
+  const createDefaultSettings = async (userId: string) => {
     try {
       const { error } = await supabase
         .from('user_audio_settings')
         .insert({
-          user_id: user.id,
+          user_id: userId,
           master_volume: DEFAULT_SETTINGS.masterVolume,
           music_enabled: DEFAULT_SETTINGS.musicEnabled,
           sound_effects_enabled: DEFAULT_SETTINGS.soundEffectsEnabled,
@@ -86,11 +115,10 @@ export function useAudioSettings() {
   };
 
   const updateSettings = async (newSettings: Partial<AudioSettings>) => {
-    const updated = { ...settings, ...newSettings };
-    setSettings(updated);
+    const updated = { ...currentSettings, ...newSettings };
+    setSharedSettings(updated); // Optimistic update for immediate UI feedback
 
     if (user) {
-      // Save to Supabase
       try {
         const { error } = await supabase
           .from('user_audio_settings')
@@ -108,7 +136,6 @@ export function useAudioSettings() {
         console.error('Error saving audio settings:', error);
       }
     } else {
-      // Save to localStorage for non-authenticated users
       localStorage.setItem('joyNudgeAudioSettings', JSON.stringify(updated));
     }
   };
@@ -118,7 +145,7 @@ export function useAudioSettings() {
     loading,
     updateSettings,
     setMasterVolume: (volume: number) => updateSettings({ masterVolume: volume }),
-    toggleMusic: () => updateSettings({ musicEnabled: !settings.musicEnabled }),
-    toggleSoundEffects: () => updateSettings({ soundEffectsEnabled: !settings.soundEffectsEnabled }),
+    toggleMusic: () => updateSettings({ musicEnabled: !currentSettings.musicEnabled }),
+    toggleSoundEffects: () => updateSettings({ soundEffectsEnabled: !currentSettings.soundEffectsEnabled }),
   };
 }
