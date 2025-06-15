@@ -10,8 +10,6 @@ interface AudioContextType {
 export function useAudioManager() {
   const { settings } = useAudioSettings();
   const audioContextRef = useRef<AudioContextType>({ initialized: false });
-  const backgroundMusicRef = useRef<HTMLAudioElement | null>(null);
-  const ambientIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize audio context on first user interaction
   const initializeAudio = useCallback(async () => {
@@ -131,126 +129,14 @@ export function useAudioManager() {
     }
   }, [settings.soundEffectsEnabled, settings.masterVolume, initializeAudio]);
 
-  // Background music management with proper settings check
-  const playBackgroundMusic = useCallback((track: 'home' | 'garden' | 'focus', loop: boolean = true) => {
-    // Always check if background music is enabled before starting
-    if (!settings.musicEnabled) {
-      console.log('Background music disabled, not playing:', track);
-      return;
-    }
-
-    console.log(`Starting background music: ${track}, music enabled: ${settings.musicEnabled}`);
-
-    // Stop any existing background music first
-    stopBackgroundMusic();
-
-    const playAmbientTones = () => {
-      // Double-check music is still enabled during playback
-      if (!settings.musicEnabled) {
-        console.log('Background music disabled during playback, stopping');
-        return;
-      }
-      
-      const audioContext = audioContextRef.current.context;
-      if (!audioContext) return;
-
-      const volume = settings.masterVolume * 0.1; // Very low volume for ambient
-
-      const createAmbientTone = (frequency: number, duration: number) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-        oscillator.type = 'triangle';
-        
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 2);
-        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + duration - 2);
-        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + duration);
-      };
-
-      switch (track) {
-        case 'home':
-          createAmbientTone(220, 8);
-          setTimeout(() => createAmbientTone(277, 6), 2000);
-          setTimeout(() => createAmbientTone(330, 7), 4000);
-          break;
-        
-        case 'garden':
-          createAmbientTone(196, 10);
-          setTimeout(() => createAmbientTone(247, 8), 3000);
-          setTimeout(() => createAmbientTone(294, 6), 6000);
-          break;
-        
-        case 'focus':
-          createAmbientTone(110, 12);
-          setTimeout(() => createAmbientTone(138, 10), 4000);
-          break;
-      }
-
-      // Only schedule next iteration if music is still enabled and loop is true
-      if (loop && settings.musicEnabled) {
-        ambientIntervalRef.current = setTimeout(() => playAmbientTones(), 15000);
-      }
-    };
-
-    initializeAudio().then(() => {
-      // Add a small delay and check again before starting
-      setTimeout(() => {
-        if (settings.musicEnabled) {
-          playAmbientTones();
-        }
-      }, 1000);
-    });
-  }, [settings.musicEnabled, settings.masterVolume, initializeAudio]);
-
-  const stopBackgroundMusic = useCallback(() => {
-    if (backgroundMusicRef.current) {
-      backgroundMusicRef.current.pause();
-      backgroundMusicRef.current = null;
-    }
-    
-    // Clear any ambient tone intervals
-    if (ambientIntervalRef.current) {
-      clearTimeout(ambientIntervalRef.current);
-      ambientIntervalRef.current = null;
-    }
-    
-    console.log('Background music stopped');
+  // Removed background music functionality entirely
+  const playBackgroundMusic = useCallback(() => {
+    console.log('Background music disabled - focusing on sound effects only');
   }, []);
 
-  // Stop background music immediately when music is disabled
-  useEffect(() => {
-    if (!settings.musicEnabled) {
-      console.log('Music disabled via settings, stopping all background music');
-      stopBackgroundMusic();
-    }
-  }, [settings.musicEnabled, stopBackgroundMusic]);
-
-  // Handle app visibility changes
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopBackgroundMusic();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [stopBackgroundMusic]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopBackgroundMusic();
-    };
-  }, [stopBackgroundMusic]);
+  const stopBackgroundMusic = useCallback(() => {
+    console.log('Background music disabled - no music to stop');
+  }, []);
 
   return {
     playSound,

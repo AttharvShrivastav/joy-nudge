@@ -6,7 +6,7 @@ import { useAudioManager } from '@/hooks/useAudioManager';
 
 export default function AudioSettings() {
   const { settings, loading, setMasterVolume, toggleMusic, toggleSoundEffects } = useAudioSettings();
-  const { playSound, stopBackgroundMusic } = useAudioManager();
+  const { playSound } = useAudioManager();
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const volume = parseFloat(e.target.value);
@@ -19,10 +19,6 @@ export default function AudioSettings() {
 
   const handleMusicToggle = () => {
     toggleMusic();
-    // Stop any playing background music when disabled
-    if (settings.musicEnabled) {
-      stopBackgroundMusic();
-    }
     // Only play toggle sound if sound effects are enabled
     if (settings.soundEffectsEnabled) {
       playSound('toggle');
@@ -91,8 +87,8 @@ export default function AudioSettings() {
         />
       </div>
 
-      {/* Background Music Toggle */}
-      <div className="joy-card p-4">
+      {/* Background Music Toggle - Disabled */}
+      <div className="joy-card p-4 opacity-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Music className="w-5 h-5 text-joy-steel-blue" />
@@ -101,23 +97,17 @@ export default function AudioSettings() {
                 Background Music
               </span>
               <span className="text-xs text-joy-steel-blue">
-                Ambient sounds for different screens
+                Currently disabled - focusing on sound effects only
               </span>
             </div>
           </div>
           <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handleMusicToggle}
-            className={`w-12 h-6 rounded-full transition-colors relative ${
-              settings.musicEnabled ? 'bg-joy-coral' : 'bg-gray-300'
-            }`}
+            disabled
+            className="w-12 h-6 rounded-full transition-colors relative bg-gray-300"
           >
             <motion.div
               className="w-5 h-5 bg-white rounded-full shadow transform transition-transform absolute top-0.5"
-              animate={{
-                x: settings.musicEnabled ? 26 : 2
-              }}
-              transition={{ duration: 0.2 }}
+              style={{ x: 2 }}
             />
           </motion.button>
         </div>

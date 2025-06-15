@@ -11,7 +11,7 @@ interface AudioSettings {
 
 const DEFAULT_SETTINGS: AudioSettings = {
   masterVolume: 0.7,
-  musicEnabled: true,
+  musicEnabled: false, // Disabled by default since we're removing background music
   soundEffectsEnabled: true,
 };
 
@@ -120,6 +120,7 @@ export function useAudioSettings() {
 
     if (user) {
       try {
+        // Use upsert with onConflict to handle existing records properly
         const { error } = await supabase
           .from('user_audio_settings')
           .upsert({
@@ -127,13 +128,21 @@ export function useAudioSettings() {
             master_volume: updated.masterVolume,
             music_enabled: updated.musicEnabled,
             sound_effects_enabled: updated.soundEffectsEnabled,
+          }, {
+            onConflict: 'user_id'
           });
 
         if (error) {
           console.error('Error saving audio settings:', error);
+          // Revert optimistic update on error
+          setSharedSettings(currentSettings);
+        } else {
+          console.log('Audio settings saved successfully');
         }
       } catch (error) {
         console.error('Error saving audio settings:', error);
+        // Revert optimistic update on error
+        setSharedSettings(currentSettings);
       }
     } else {
       localStorage.setItem('joyNudgeAudioSettings', JSON.stringify(updated));

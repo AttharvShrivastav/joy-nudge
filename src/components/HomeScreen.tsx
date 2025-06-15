@@ -90,7 +90,7 @@ export default function HomeScreen() {
   const { gardenData } = useGardenData();
   const { toast } = useToast();
   const { playSound } = useSoundEffects();
-  const { playBackgroundMusic, stopBackgroundMusic, initializeAudio } = useAudioManager();
+  const { initializeAudio } = useAudioManager();
 
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'there';
 
@@ -138,25 +138,17 @@ export default function HomeScreen() {
     }
   }, [user, tutorialLoading, gardenData.todaysMood]);
 
-  // Initialize audio and start background music when component mounts
+  // Initialize audio context without background music
   useEffect(() => {
     const startAudio = async () => {
       await initializeAudio();
-      // Start subtle background music for home screen
-      setTimeout(() => {
-        playBackgroundMusic('home', true);
-      }, 1000);
+      console.log('Audio context initialized for sound effects');
     };
 
     if (user && !tutorialLoading && !isInitialLoading) {
       startAudio();
     }
-
-    // Cleanup function to stop background music when component unmounts
-    return () => {
-      stopBackgroundMusic();
-    };
-  }, [user, tutorialLoading, isInitialLoading, initializeAudio, playBackgroundMusic, stopBackgroundMusic]);
+  }, [user, tutorialLoading, isInitialLoading, initializeAudio]);
 
   const handleMoodSelect = async (mood: string) => {
     playSound('mood_select');

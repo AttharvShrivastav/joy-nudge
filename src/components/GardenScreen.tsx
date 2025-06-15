@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useStreakData } from "@/hooks/useStreakData";
 import { useAudioManager } from "@/hooks/useAudioManager";
-import { useAudioSettings } from "@/hooks/useAudioSettings";
 import GardenTabs from "./garden/GardenTabs";
 import GardenView from "./garden/GardenView";
 import StatsView from "./garden/StatsView";
@@ -13,51 +12,22 @@ export default function GardenScreen() {
   const [activeTab, setActiveTab] = useState<'garden' | 'stats' | 'achievements' | 'reflections'>('garden');
   const [reflections, setReflections] = useState<any[]>([]);
   const { streakData, loading } = useStreakData();
-  const { playBackgroundMusic, stopBackgroundMusic, initializeAudio } = useAudioManager();
-  const { settings } = useAudioSettings();
+  const { initializeAudio } = useAudioManager();
 
   useEffect(() => {
     const savedReflections = JSON.parse(localStorage.getItem('joyReflections') || '[]');
     setReflections(savedReflections);
   }, []);
 
-  // Start garden ambient sounds when component mounts, but only if music is enabled
+  // Initialize audio context for sound effects only
   useEffect(() => {
-    const startGardenAudio = async () => {
-      console.log('GardenScreen mounted, music enabled:', settings.musicEnabled);
-      
-      if (!settings.musicEnabled) {
-        console.log('Music disabled, not starting garden audio');
-        return;
-      }
-
+    const startAudio = async () => {
+      console.log('GardenScreen mounted, initializing audio for sound effects');
       await initializeAudio();
-      setTimeout(() => {
-        // Double-check settings before starting music
-        if (settings.musicEnabled) {
-          console.log('Starting garden background music');
-          playBackgroundMusic('garden', true);
-        } else {
-          console.log('Music was disabled before starting, skipping');
-        }
-      }, 500);
     };
 
-    startGardenAudio();
-
-    return () => {
-      console.log('GardenScreen unmounting, stopping background music');
-      stopBackgroundMusic();
-    };
-  }, [initializeAudio, playBackgroundMusic, stopBackgroundMusic, settings.musicEnabled]);
-
-  // Stop music immediately if settings change while on this screen
-  useEffect(() => {
-    if (!settings.musicEnabled) {
-      console.log('Music disabled while on garden screen, stopping background music');
-      stopBackgroundMusic();
-    }
-  }, [settings.musicEnabled, stopBackgroundMusic]);
+    startAudio();
+  }, [initializeAudio]);
 
   return (
     <div className="min-h-screen bg-joy-white pb-20 px-4">
