@@ -1,6 +1,9 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Textarea } from "../ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ReflectiveNudgeProps {
   nudge: {
@@ -14,17 +17,53 @@ interface ReflectiveNudgeProps {
 export default function ReflectiveNudge({ nudge, onComplete, onSkip }: ReflectiveNudgeProps) {
   const [reflection, setReflection] = useState("");
   const [wordCount, setWordCount] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
   
-  const saveReflection = (text: string) => {
-    const reflections = JSON.parse(localStorage.getItem('joyReflections') || '[]');
-    reflections.push({
-      id: Date.now(),
-      nudgeTitle: nudge.nudge,
-      reflection: text,
-      date: new Date().toISOString(),
-      wordCount: text.trim().split(/\s+/).length
-    });
-    localStorage.setItem('joyReflections', JSON.stringify(reflections));
+  const saveReflection = async (text: string) => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      // Save to backend
+      const { error } = await supabase
+        .from('reflections')
+        .insert({
+          user_id: user.id,
+          content: text,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error saving reflection to backend:', error);
+        // Fallback to localStorage if backend fails
+        const reflections = JSON.parse(localStorage.getItem('joyReflections') || '[]');
+        reflections.push({
+          id: Date.now(),
+          nudgeTitle: nudge.nudge,
+          reflection: text,
+          date: new Date().toISOString(),
+          wordCount: text.trim().split(/\s+/).length
+        });
+        localStorage.setItem('joyReflections', JSON.stringify(reflections));
+      } else {
+        console.log('Reflection saved to backend successfully');
+      }
+    } catch (error) {
+      console.error('Unexpected error saving reflection:', error);
+      // Fallback to localStorage
+      const reflections = JSON.parse(localStorage.getItem('joyReflections') || '[]');
+      reflections.push({
+        id: Date.now(),
+        nudgeTitle: nudge.nudge,
+        reflection: text,
+        date: new Date().toISOString(),
+        wordCount: text.trim().split(/\s+/).length
+      });
+      localStorage.setItem('joyReflections', JSON.stringify(reflections));
+    } finally {
+      setSaving(false);
+    }
   };
   
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -36,9 +75,9 @@ export default function ReflectiveNudge({ nudge, onComplete, onSkip }: Reflectiv
     setWordCount(words.length);
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (reflection.trim()) {
-      saveReflection(reflection.trim());
+      await saveReflection(reflection.trim());
       onComplete();
     }
   };
@@ -70,14 +109,14 @@ export default function ReflectiveNudge({ nudge, onComplete, onSkip }: Reflectiv
       
       <button
         onClick={handleSave}
-        disabled={!hasEnoughWords}
+        disabled={!hasEnoughWords || saving}
         className={`w-full mt-4 py-3 rounded-xl font-nunito font-semibold transition-all ${
-          hasEnoughWords
+          hasEnoughWords && !saving
             ? 'joy-button-primary'
             : 'bg-joy-light-blue/50 text-joy-steel-blue/50 cursor-not-allowed'
         }`}
       >
-        {hasEnoughWords ? 'Save Reflection' : `Write ${minWords - wordCount} more words`}
+        {saving ? 'Saving...' : hasEnoughWords ? 'Save Reflection' : `Write ${minWords - wordCount} more words`}
       </button>
       
       {onSkip && (
@@ -86,6 +125,7 @@ export default function ReflectiveNudge({ nudge, onComplete, onSkip }: Reflectiv
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onSkip}
+            disabled={saving}
             className="joy-button-secondary text-sm px-4 py-2"
           >
             Skip
