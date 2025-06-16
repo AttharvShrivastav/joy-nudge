@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -5,9 +6,12 @@ import { useStreakData } from "@/hooks/useStreakData";
 import { useTutorial } from "@/hooks/useTutorial";
 import { useNudgeLikes } from "@/hooks/useNudgeLikes";
 import { useGardenData } from "@/hooks/useGardenData";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { getRandomFallbackNudge } from "@/data/fallbackNudges";
+import { useAudioManager } from "@/hooks/useAudioManager";
+import { useNudgeManager } from "@/hooks/useNudgeManager";
+import { useAppInitialization } from "@/hooks/useAppInitialization";
+import { useAiNudges } from "@/hooks/useAiNudges";
+import { useMoodManager } from "@/hooks/useMoodManager";
+import { prompts } from "@/data/defaultNudges";
 import Tutorial from "./Tutorial";
 import FocusMode from "./FocusMode";
 import MoodSelector from "./MoodSelector";
@@ -18,125 +22,28 @@ import FocusModeButton from "./home/FocusModeButton";
 import MainNudgeCard from "./home/MainNudgeCard";
 import MoreNudgesSection from "./home/MoreNudgesSection";
 import { useSoundEffects } from "./home/useSoundEffects";
-import { useAudioManager } from "@/hooks/useAudioManager";
-
-const prompts = [
-  {
-    id: 2,
-    nudge: "Stretch for 1 minute",
-    description: "Give your body some love with gentle movement. Any stretch that feels good to you.",
-    affirmation: "Wonderful! Your body thanks you.",
-    type: "timer",
-    duration: 60
-  },
-  {
-    id: 3,
-    nudge: "Notice 5 things you can see",
-    description: "Ground yourself in the present moment by observing your surroundings with curiosity.",
-    affirmation: "Perfect! You've anchored yourself in the now.",
-    type: "observational",
-    items: ["Something colorful", "Something textured", "Something moving", "Something still", "Something that makes you smile"]
-  },
-  {
-    id: 4,
-    nudge: "Write one thing you're grateful for",
-    description: "Take a moment to acknowledge something positive in your life, no matter how small.",
-    affirmation: "Thank you for sharing your gratitude!",
-    type: "reflective"
-  },
-  {
-    id: 5,
-    nudge: "Journal your thoughts",
-    description: "Take a few minutes to write down what's on your mind. Let your thoughts flow freely onto the page.",
-    affirmation: "Beautiful reflection! Your thoughts matter.",
-    type: "reflective"
-  },
-  {
-    id: 6,
-    nudge: "What made you smile today?",
-    description: "Reflect on a moment that brought joy to your day, however small it might have been.",
-    affirmation: "Thank you for sharing that beautiful moment!",
-    type: "reflective"
-  }
-];
-
-const breathingNudge = {
-  id: 1,
-  nudge: "Take 3 deep breaths",
-  description: "Center yourself with mindful breathing. Follow the gentle guide to inhale, hold, and exhale three times.",
-  affirmation: "Beautiful! You've created a moment of calm.",
-  type: "breathe",
-  duration: 3
-};
 
 export default function HomeScreen({ onAvatarClick }: { onAvatarClick?: () => void }) {
-  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [isEngaged, setIsEngaged] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const [showFocusMode, setShowFocusMode] = useState(false);
   const [showMoreNudges, setShowMoreNudges] = useState(false);
-  const [aiNudges, setAiNudges] = useState<any[]>([]);
-  const [loadingAiNudges, setLoadingAiNudges] = useState(false);
-  const [showMoodSelector, setShowMoodSelector] = useState(false);
-  const [currentMood, setCurrentMood] = useState<string>('open');
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showCelebrationText, setShowCelebrationText] = useState(false);
-  const [isFirstTime, setIsFirstTime] = useState(false);
   
   const { user } = useAuth();
   const { streakData, updateStreak } = useStreakData();
   const { shouldShowTutorial, markTutorialComplete, loading: tutorialLoading } = useTutorial();
-  const { toggleLike, isLiked, getNextQueuedNudge, removeFromQueue } = useNudgeLikes();
+  const { toggleLike, isLiked } = useNudgeLikes();
   const { gardenData } = useGardenData();
-  const { toast } = useToast();
   const { playSound } = useSoundEffects();
   const { initializeAudio } = useAudioManager();
 
+  const { isInitialLoading, showMoodSelector, setShowMoodSelector } = useAppInitialization(user, tutorialLoading, gardenData);
+  const { currentMood, handleMoodSelect } = useMoodManager(user, playSound);
+  const { currentPrompt, isFirstTime, handleSkip, handleComplete, setCurrentPromptIndex } = useNudgeManager(user, currentMood);
+  const { aiNudges, loadingAiNudges, generateMoreNudges } = useAiNudges(currentMood);
+
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'there';
-
-  // Check if this is the user's first time and show breathing nudge
-  useEffect(() => {
-    const hasSeenBreathingNudge = localStorage.getItem('hasSeenBreathingNudge');
-    if (!hasSeenBreathingNudge && user) {
-      setIsFirstTime(true);
-    }
-  }, [user]);
-
-  // Check for queued nudges and use them instead of default prompts
-  useEffect(() => {
-    const queuedNudge = getNextQueuedNudge();
-    if (queuedNudge && !isFirstTime) {
-      const existingIndex = prompts.findIndex(p => p.id.toString() === queuedNudge.id.toString());
-      
-      if (existingIndex === -1) {
-        prompts.unshift(queuedNudge);
-        setCurrentPromptIndex(0);
-      } else {
-        setCurrentPromptIndex(existingIndex);
-      }
-    }
-  }, [isFirstTime]);
-
-  const currentPrompt = isFirstTime ? breathingNudge : prompts[currentPromptIndex];
-
-  // Initialize app with loading screen and mood selector
-  useEffect(() => {
-    const initializeApp = async () => {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setIsInitialLoading(false);
-      
-      const lastMoodDate = localStorage.getItem('lastMoodDate');
-      const today = new Date().toDateString();
-      
-      if (lastMoodDate !== today && !gardenData.todaysMood) {
-        setTimeout(() => setShowMoodSelector(true), 500);
-      }
-    };
-
-    if (user && !tutorialLoading) {
-      initializeApp();
-    }
-  }, [user, tutorialLoading, gardenData.todaysMood]);
 
   // Initialize audio context without background music
   useEffect(() => {
@@ -150,29 +57,9 @@ export default function HomeScreen({ onAvatarClick }: { onAvatarClick?: () => vo
     }
   }, [user, tutorialLoading, isInitialLoading, initializeAudio]);
 
-  const handleMoodSelect = async (mood: string) => {
-    playSound('mood_select');
-    setCurrentMood(mood);
+  const handleMoodSelectWithClose = async (mood: string) => {
+    await handleMoodSelect(mood);
     setShowMoodSelector(false);
-    localStorage.setItem('lastMoodDate', new Date().toDateString());
-    localStorage.setItem('currentMood', mood);
-    
-    try {
-      await supabase
-        .from('mood_logs')
-        .insert({
-          user_id: user?.id,
-          mood_value: mood,
-          timestamp: new Date().toISOString()
-        });
-    } catch (error) {
-      console.error('Error storing mood:', error);
-    }
-    
-    toast({
-      title: `Feeling ${mood} today`,
-      description: "We'll tailor your nudges to match your mood! ✨"
-    });
   };
 
   const handleEngage = () => {
@@ -180,111 +67,19 @@ export default function HomeScreen({ onAvatarClick }: { onAvatarClick?: () => vo
     setIsEngaged(true);
   };
 
-  const handleSkip = async () => {
+  const handleSkipWithSound = async () => {
     playSound('button_click');
-    if (isFirstTime) {
-      localStorage.setItem('hasSeenBreathingNudge', 'true');
-      setIsFirstTime(false);
-    }
-    
-    // Remove current nudge from queue if it's a queued nudge
-    removeFromQueue(currentPrompt.id.toString());
-    
-    // Generate AI nudge when skipping
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-nudge', {
-        body: {
-          context: 'user_skipped_nudge',
-          current_mood: currentMood,
-          skip_category: currentPrompt.type || 'unknown'
-        }
-      });
-
-      if (error) throw error;
-      
-      if (data?.nudge) {
-        const aiPrompt = {
-          id: data.nudge.id,
-          nudge: data.nudge.title,
-          description: data.nudge.description,
-          affirmation: "Wonderful! Thank you for trying this personalized nudge.",
-          type: data.nudge.interactive_type?.toLowerCase() || "reflective",
-          interactive_type: data.nudge.interactive_type
-        };
-        
-        // Add AI nudge to prompts and switch to it
-        const newIndex = prompts.length;
-        prompts.push(aiPrompt);
-        setCurrentPromptIndex(newIndex);
-      } else {
-        // Fallback to next nudge if AI generation fails
-        setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
-      }
-    } catch (error) {
-      console.error('Error generating AI nudge on skip:', error);
-      // Fallback to next nudge
-      setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
-    }
-    
+    await handleSkip();
     setIsEngaged(false);
   };
 
-  const handleSkipBreathing = () => {
-    playSound('button_click');
-    if (isFirstTime) {
-      localStorage.setItem('hasSeenBreathingNudge', 'true');
-      setIsFirstTime(false);
-    }
-    setIsEngaged(false);
-  };
-  
-  const handleComplete = async () => {
+  const handleCompleteWithCelebration = async () => {
     playSound('completion');
     setIsEngaged(false);
     setCelebrating(true);
     setShowCelebrationText(false);
     
-    if (isFirstTime) {
-      localStorage.setItem('hasSeenBreathingNudge', 'true');
-      setIsFirstTime(false);
-    }
-    
-    removeFromQueue(currentPrompt.id.toString());
-    
-    // Store nudge completion in backend
-    try {
-      if (user) {
-        const completionData = {
-          user_id: user.id,
-          nudge_id: currentPrompt.id,
-          nudge_title: currentPrompt.nudge,
-          completed_at: new Date().toISOString(),
-          duration_seconds: currentPrompt.duration || 0,
-          mood_at_completion: currentMood
-        };
-
-        // Store in local storage for immediate UI updates
-        const existingCompletions = JSON.parse(localStorage.getItem('nudgeCompletions') || '[]');
-        existingCompletions.push(completionData);
-        localStorage.setItem('nudgeCompletions', JSON.stringify(existingCompletions));
-
-        // Store in Supabase
-        await supabase
-          .from('nudge_completions')
-          .insert({
-            user_id: user.id,
-            user_nudge_id: currentPrompt.id.toString(),
-            duration_seconds: currentPrompt.duration || 0,
-            mood_at_completion: currentMood,
-            completed_at: new Date().toISOString()
-          });
-
-        console.log('Nudge completion stored successfully');
-      }
-    } catch (error) {
-      console.error('Error storing nudge completion:', error);
-    }
-
+    await handleComplete();
     await updateStreak();
     
     setTimeout(() => {
@@ -297,41 +92,6 @@ export default function HomeScreen({ onAvatarClick }: { onAvatarClick?: () => vo
       setShowMoreNudges(true);
       generateMoreNudges();
     }, 2500);
-  };
-
-  const generateMoreNudges = async () => {
-    if (loadingAiNudges) return;
-    
-    setLoadingAiNudges(true);
-    try {
-      const nudgePromises = Array.from({ length: 3 }, async () => {
-        try {
-          const { data, error } = await supabase.functions.invoke('generate-nudge', {
-            body: {
-              context: 'post-completion suggestions',
-              current_mood: currentMood,
-              requested_interactive_type: 'REFLECTIVE'
-            }
-          });
-
-          if (error) throw error;
-          return data?.nudge;
-        } catch (error) {
-          console.log('AI generation failed, using fallback');
-          return getRandomFallbackNudge();
-        }
-      });
-
-      const results = await Promise.all(nudgePromises);
-      const validNudges = results.filter(Boolean);
-      setAiNudges(validNudges);
-    } catch (error) {
-      console.error('Error generating nudges:', error);
-      const fallbackNudges = Array.from({ length: 3 }, () => getRandomFallbackNudge());
-      setAiNudges(fallbackNudges);
-    } finally {
-      setLoadingAiNudges(false);
-    }
   };
 
   const handleTryAiNudge = (nudge: any) => {
@@ -382,7 +142,7 @@ export default function HomeScreen({ onAvatarClick }: { onAvatarClick?: () => vo
         <AnimatePresence>
           {showMoodSelector && (
             <MoodSelector 
-              onMoodSelect={handleMoodSelect}
+              onMoodSelect={handleMoodSelectWithClose}
               onSkip={() => setShowMoodSelector(false)}
             />
           )}
@@ -415,8 +175,8 @@ export default function HomeScreen({ onAvatarClick }: { onAvatarClick?: () => vo
               showCelebrationText={showCelebrationText}
               isFirstTime={isFirstTime}
               onEngage={handleEngage}
-              onComplete={handleComplete}
-              onSkip={handleSkip}
+              onComplete={handleCompleteWithCelebration}
+              onSkip={handleSkipWithSound}
               onNudgeLike={handleNudgeLike}
               isLiked={isLiked}
             />
