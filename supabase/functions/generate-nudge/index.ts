@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -34,7 +33,8 @@ serve(async (req) => {
       requested_category, 
       requested_interactive_type, 
       current_mood = 'open', 
-      context 
+      context,
+      skip_category
     } = await req.json()
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
@@ -89,6 +89,19 @@ serve(async (req) => {
     const nudge_completion_frequency = total_completions > 20 ? 'consistent' : 
                                      total_completions > 5 ? 'developing' : 'new_user'
 
+    // Determine nudge type variety based on context and user patterns
+    const nudge_types = ['BREATHING', 'TIMED', 'OBSERVATIONAL', 'REFLECTIVE']
+    const categories = ['Mindfulness', 'Gratitude', 'Movement', 'Connection', 'Self-Care', 'Reflection', 'Creativity']
+    
+    // Avoid recently used types and categories for variety
+    const avoid_types = last_completed_interactive_types.slice(0, 2)
+    const avoid_categories = last_completed_categories.slice(0, 2)
+    
+    // Add skip category to avoid list if provided
+    if (skip_category) {
+      avoid_categories.push(skip_category)
+    }
+
     // Determine time of day category
     const hour = new Date().getHours()
     const time_of_day_category = hour < 6 ? 'late_night' :
@@ -106,10 +119,10 @@ serve(async (req) => {
     const userSeed = user.id.slice(-8)
     const contextHash = context ? context.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0) : 0
 
-    // Create highly personalized prompt focusing on reflective journaling
-    const personalizedPrompt = `You are 'The Alchemist AI' for a mobile app called 'Joy Nudge'. Your purpose is to generate highly personalized, unique, reflective journaling prompts that spark joy, self-discovery, and mindful writing.
+    // Create highly personalized prompt with variety emphasis
+    const personalizedPrompt = `You are 'The Alchemist AI' for a mobile app called 'Joy Nudge'. Your purpose is to generate highly personalized, unique nudges that spark joy, self-discovery, and mindful moments.
 
-The app's tone is gentle, encouraging, cozy, uplifting, and non-judgmental. Nudges should be micro-habits, quick to perform (3-5 minutes), and focus on positive reflective writing that helps users connect with themselves.
+The app's tone is gentle, encouraging, cozy, uplifting, and non-judgmental. Nudges should be micro-habits, quick to perform (3-5 minutes), and focus on positive activities.
 
 PERSONALIZATION CONTEXT:
 - User: ${user_name} (ID: ${user.id.slice(-8)})
@@ -119,49 +132,60 @@ PERSONALIZATION CONTEXT:
 - Current streak: ${current_streak_days} days (longest: ${longest_streak_days} days)
 - Recent categories: [${last_completed_categories.join(', ')}]
 - Recent interaction types: [${last_completed_interactive_types.join(', ')}]
+- Context: ${context || 'general_request'}
 
 ${requested_category ? `SPECIFIC REQUEST: User wants a '${requested_category}' category nudge.` : ''}
-${requested_interactive_type ? `INTERACTION PREFERENCE: User prefers '${requested_interactive_type}' type.` : 'FOCUS: Generate REFLECTIVE journaling prompts that encourage writing.'}
+${requested_interactive_type ? `INTERACTION PREFERENCE: User prefers '${requested_interactive_type}' type.` : 'GENERATE VARIETY: Create diverse interaction types, not just reflective ones.'}
+
+VARIETY REQUIREMENTS:
+- Avoid these recent types: [${avoid_types.join(', ')}]
+- Avoid these recent categories: [${avoid_categories.join(', ')}]
+- CREATE DIVERSE NUDGES: Mix breathing exercises, timed activities, observational practices, and reflective moments
+- ${context === 'user_skipped_nudge' ? 'User skipped previous nudge - offer something different and engaging' : ''}
+
+INTERACTION TYPES TO CHOOSE FROM:
+- BREATHING: Guided breathing exercises (inhale, hold, exhale patterns)
+- TIMED: Physical activities with specific durations (stretching, walking, dancing)
+- OBSERVATIONAL: Mindful awareness exercises (noticing surroundings, gratitude lists)
+- REFLECTIVE: Writing or thinking prompts (journaling, self-reflection)
 
 PERSONALIZATION RULES:
-- For new users (${nudge_completion_frequency}): Focus on simple, welcoming writing prompts about immediate experiences
-- For developing users: Introduce deeper self-reflection and emotional exploration
-- For consistent users: Offer nuanced, creative prompts that challenge perspective and growth
-- Avoid recently used categories: [${last_completed_categories.slice(0, 3).join(', ')}]
-- ${time_of_day_category === 'morning' ? 'Morning energy: Focus on intentions, hopes, fresh starts' :
-      time_of_day_category === 'afternoon' ? 'Midday reflection: Process current experiences, energy check-ins' :
-      time_of_day_category === 'evening' ? 'Evening processing: Reflect on the day, gratitude, lessons learned' :
-      'Night time: Gentle processing, tomorrow\'s hopes, peaceful thoughts'}
+- For new users (${nudge_completion_frequency}): Focus on simple, welcoming activities
+- For developing users: Introduce variety and deeper engagement
+- For consistent users: Offer creative, challenging, and growth-oriented nudges
+- ${time_of_day_category === 'morning' ? 'Morning energy: Energizing activities, intention setting' :
+      time_of_day_category === 'afternoon' ? 'Midday boost: Re-energizing, movement, quick breaks' :
+      time_of_day_category === 'evening' ? 'Evening wind-down: Calming activities, reflection, gratitude' :
+      'Night time: Gentle, peaceful, relaxing activities'}
 
 MOOD ADAPTATION:
-- ${current_mood === 'happy' ? 'Amplify joy through gratitude and appreciation writing' :
-      current_mood === 'stressed' ? 'Gentle self-compassion and stress-processing prompts' :
-      current_mood === 'calm' ? 'Mindful observation and peaceful reflection prompts' :
-      current_mood === 'tired' ? 'Simple, nurturing prompts about rest and self-care' :
-      current_mood === 'energetic' ? 'Dynamic prompts about goals, excitement, and possibilities' :
-      'Supportive prompts that meet the user where they are emotionally'}
-
-INTERACTION TYPE: Always use 'REFLECTIVE' for journaling-focused nudges that involve writing.
+- ${current_mood === 'happy' ? 'Amplify joy through creative expression and celebration' :
+      current_mood === 'stressed' ? 'Calming breathing exercises and gentle movement' :
+      current_mood === 'calm' ? 'Mindful observation and peaceful activities' :
+      current_mood === 'tired' ? 'Gentle movement or energizing breathing exercises' :
+      current_mood === 'energetic' ? 'Active movement and creative expression' :
+      'Supportive activities that meet the user where they are emotionally'}
 
 UNIQUENESS SEEDS: ${randomSeed}_${timestamp}_${userSeed}_${contextHash}
 
-**CRUCIAL: Generate a completely novel, never-before-suggested reflective writing idea. Make it feel personally crafted for ${user_name}'s current state.**
+**CRUCIAL: Generate a completely novel, diverse nudge. Don't default to reflective - mix it up with breathing, movement, or observational activities based on context.**
 
 RESPONSE FORMAT (strict JSON only):
 {
   "title": "Nudge Title (max 40 characters, warm and inviting)",
-  "description": "Reflective writing prompt (max 160 characters, clear question or instruction that encourages 2-3 sentences of writing)",
-  "category": "Category (Reflection, Gratitude, Self-Care, Connection, or Mindfulness)",
-  "interactive_type": "REFLECTIVE"
+  "description": "Clear instruction (max 160 characters, specific action or guidance)",
+  "category": "Category from: Mindfulness, Gratitude, Movement, Connection, Self-Care, Reflection, Creativity",
+  "interactive_type": "Type from: BREATHING, TIMED, OBSERVATIONAL, REFLECTIVE",
+  "duration": "Include if BREATHING (number of breaths) or TIMED (seconds), omit for others"
 }
 
-EXAMPLES FOR INSPIRATION (do NOT copy, create something new):
-- "Write about a small moment today that surprised you with its beauty"
-- "Describe three textures around you and how they make you feel"
-- "What would you tell your past self about handling difficult emotions?"
-- "Write about a place that always makes you feel safe and why"
+EXAMPLES FOR INSPIRATION (create something NEW):
+- BREATHING: "Take 5 calming breaths" with duration: 5
+- TIMED: "Dance to your favorite song" with duration: 180
+- OBSERVATIONAL: "Find 3 things that make you smile"
+- REFLECTIVE: "Write about your proudest moment today"
 
-Create a unique, personally meaningful writing prompt for ${user_name} right now!`
+Create a unique, personally meaningful ${requested_interactive_type || 'varied'} nudge for ${user_name} right now!`
 
     console.log('Making personalized request to Gemini API...')
 
@@ -213,24 +237,32 @@ Create a unique, personally meaningful writing prompt for ${user_name} right now
     } catch (parseError) {
       console.error('Failed to parse Gemini response, using personalized fallback:', generatedText)
       
-      // Personalized fallback nudges based on user context
+      // Personalized fallback nudges with variety
       const personalizedFallbacks = [
         {
-          title: `${user_name}'s gratitude moment`,
-          description: `Write about one small thing that made you smile today, ${user_name}. What was special about it?`,
+          title: `${user_name}'s breathing moment`,
+          description: `Take 4 deep breaths, ${user_name}. Inhale peace, exhale tension.`,
+          category: "Mindfulness",
+          interactive_type: "BREATHING",
+          duration: 4
+        },
+        {
+          title: "Quick movement break",
+          description: `${user_name}, stretch your arms above your head and hold for 30 seconds.`,
+          category: "Movement", 
+          interactive_type: "TIMED",
+          duration: 30
+        },
+        {
+          title: "Gratitude spotting",
+          description: `${user_name}, notice 3 things around you that you're grateful for right now.`,
           category: "Gratitude",
-          interactive_type: "REFLECTIVE"
+          interactive_type: "OBSERVATIONAL"
         },
         {
-          title: "Your personal reflection",
-          description: `${user_name}, describe how you're feeling right now in just a few sentences. What's on your heart?`,
+          title: "Personal reflection",
+          description: `${user_name}, write one sentence about how you want to feel right now.`,
           category: "Reflection", 
-          interactive_type: "REFLECTIVE"
-        },
-        {
-          title: "Self-care check-in",
-          description: `Write about what your body and mind need most right now, ${user_name}. How can you nurture yourself?`,
-          category: "Self-Care",
           interactive_type: "REFLECTIVE"
         }
       ]
@@ -243,13 +275,23 @@ Create a unique, personally meaningful writing prompt for ${user_name} right now
       throw new Error('Generated nudge missing required fields')
     }
 
-    // Ensure valid interactive_type (always REFLECTIVE for writing prompts)
-    nudgeData.interactive_type = 'REFLECTIVE'
+    // Ensure valid interactive_type with variety
+    const validTypes = ['BREATHING', 'TIMED', 'OBSERVATIONAL', 'REFLECTIVE']
+    if (!validTypes.includes(nudgeData.interactive_type)) {
+      // Default to a varied type instead of always reflective
+      const fallbackTypes = validTypes.filter(type => !avoid_types.includes(type))
+      nudgeData.interactive_type = fallbackTypes.length > 0 
+        ? fallbackTypes[Math.floor(Math.random() * fallbackTypes.length)]
+        : 'OBSERVATIONAL'
+    }
 
     // Ensure valid category
     const validCategories = ['Mindfulness', 'Gratitude', 'Movement', 'Connection', 'Self-Care', 'Reflection', 'Creativity']
     if (!validCategories.includes(nudgeData.category)) {
-      nudgeData.category = 'Reflection'
+      const fallbackCategories = validCategories.filter(cat => !avoid_categories.includes(cat))
+      nudgeData.category = fallbackCategories.length > 0
+        ? fallbackCategories[Math.floor(Math.random() * fallbackCategories.length)]
+        : 'Mindfulness'
     }
 
     // Insert into database
@@ -260,6 +302,7 @@ Create a unique, personally meaningful writing prompt for ${user_name} right now
         description: nudgeData.description.substring(0, 500),
         category: nudgeData.category,
         interactive_type: nudgeData.interactive_type,
+        duration: nudgeData.duration || null,
         is_ai_generated: true,
         user_id: user.id
       })
@@ -277,12 +320,15 @@ Create a unique, personally meaningful writing prompt for ${user_name} right now
       JSON.stringify({ 
         success: true, 
         nudge: newNudge,
-        message: `✨ A special reflective prompt created just for ${user_name}!`,
+        message: `✨ A special ${nudgeData.interactive_type.toLowerCase()} nudge created just for ${user_name}!`,
         personalization_used: {
           user_engagement: nudge_completion_frequency,
           time_context: time_of_day_category,
           mood_context: current_mood,
-          streak_level: current_streak_days
+          streak_level: current_streak_days,
+          interaction_type: nudgeData.interactive_type,
+          avoided_types: avoid_types,
+          avoided_categories: avoid_categories
         }
       }),
       { 

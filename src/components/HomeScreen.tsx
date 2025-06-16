@@ -180,7 +180,7 @@ export default function HomeScreen({ onAvatarClick }: { onAvatarClick?: () => vo
     setIsEngaged(true);
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     playSound('button_click');
     if (isFirstTime) {
       localStorage.setItem('hasSeenBreathingNudge', 'true');
@@ -190,11 +190,45 @@ export default function HomeScreen({ onAvatarClick }: { onAvatarClick?: () => vo
     // Remove current nudge from queue if it's a queued nudge
     removeFromQueue(currentPrompt.id.toString());
     
-    // Move to next nudge
-    setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
+    // Generate AI nudge when skipping
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-nudge', {
+        body: {
+          context: 'user_skipped_nudge',
+          current_mood: currentMood,
+          skip_category: currentPrompt.type || 'unknown'
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.nudge) {
+        const aiPrompt = {
+          id: data.nudge.id,
+          nudge: data.nudge.title,
+          description: data.nudge.description,
+          affirmation: "Wonderful! Thank you for trying this personalized nudge.",
+          type: data.nudge.interactive_type?.toLowerCase() || "reflective",
+          interactive_type: data.nudge.interactive_type
+        };
+        
+        // Add AI nudge to prompts and switch to it
+        const newIndex = prompts.length;
+        prompts.push(aiPrompt);
+        setCurrentPromptIndex(newIndex);
+      } else {
+        // Fallback to next nudge if AI generation fails
+        setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
+      }
+    } catch (error) {
+      console.error('Error generating AI nudge on skip:', error);
+      // Fallback to next nudge
+      setCurrentPromptIndex(prev => (prev + 1) % prompts.length);
+    }
+    
     setIsEngaged(false);
   };
-  
+
   const handleSkipBreathing = () => {
     playSound('button_click');
     if (isFirstTime) {
