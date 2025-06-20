@@ -6,11 +6,13 @@ import { Switch } from "./ui/switch";
 import { Bell, Moon, Palette, User, Shield, Heart, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserAvatar } from "@/hooks/useUserAvatar";
 import AvatarSelector from "./AvatarSelector";
 import AudioSettings from "./settings/AudioSettings";
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
+  const { refreshAvatar } = useUserAvatar();
   const [profile, setProfile] = useState({
     username: "",
     email: "",
@@ -40,6 +42,12 @@ export default function SettingsScreen() {
       setForm(userProfile);
     }
   }, [user]);
+
+  const handleAvatarUpdate = (newAvatarUrl: string) => {
+    console.log('Avatar updated, refreshing avatar display:', newAvatarUrl);
+    // Refresh the avatar in all components using the hook
+    refreshAvatar();
+  };
 
   const handleEdit = () => {
     setEditing(true);
@@ -93,7 +101,7 @@ export default function SettingsScreen() {
         </h1>
 
         {/* Avatar Selection Section */}
-        <AvatarSelector inSettings={true} />
+        <AvatarSelector inSettings={true} onAvatarUpdate={handleAvatarUpdate} />
 
         {/* Profile Section */}
         <div className="joy-card p-6 mb-6">

@@ -1,5 +1,6 @@
 
 import { useAuth } from "@/hooks/useAuth";
+import { useUserAvatar } from "@/hooks/useUserAvatar";
 
 interface PixelAvatarProps {
   onClick?: () => void;
@@ -8,6 +9,7 @@ interface PixelAvatarProps {
 
 export default function PixelAvatar({ onClick, size = "md" }: PixelAvatarProps) {
   const { user } = useAuth();
+  const { avatarUrl } = useUserAvatar();
 
   const sizeClasses = {
     sm: "w-8 h-8",
@@ -43,14 +45,19 @@ export default function PixelAvatar({ onClick, size = "md" }: PixelAvatarProps) 
           backgroundSize: "3px 3px"
         }}
       />
-      {/* Pixelated Plant Image */}
+      {/* User's Selected Avatar */}
       <img
-        src="/lovable-uploads/136a06f0-73eb-4900-a90f-bbddb0f13d0c.png"
-        alt="Avatar plant"
+        src={avatarUrl}
+        alt="User avatar"
         className="w-full h-full object-cover relative z-10 select-none"
         draggable={false}
         style={{
           imageRendering: "pixelated",
+        }}
+        onError={(e) => {
+          // Fallback to default plant image if the selected avatar fails to load
+          const target = e.target as HTMLImageElement;
+          target.src = "/lovable-uploads/136a06f0-73eb-4900-a90f-bbddb0f13d0c.png";
         }}
       />
     </button>

@@ -20,9 +20,10 @@ const DEFAULT_AVATARS = [
 interface AvatarSelectorProps {
   onClose?: () => void;
   inSettings?: boolean;
+  onAvatarUpdate?: (newAvatarUrl: string) => void;
 }
 
-export default function AvatarSelector({ onClose, inSettings = false }: AvatarSelectorProps) {
+export default function AvatarSelector({ onClose, inSettings = false, onAvatarUpdate }: AvatarSelectorProps) {
   const { user } = useAuth();
   const [selectedAvatar, setSelectedAvatar] = useState<string>("");
   const [currentAvatar, setCurrentAvatar] = useState<string>("");
@@ -67,7 +68,15 @@ export default function AvatarSelector({ onClose, inSettings = false }: AvatarSe
       if (error) throw error;
       
       setCurrentAvatar(selectedAvatar);
+      
+      // Notify parent component about the avatar update
+      if (onAvatarUpdate) {
+        onAvatarUpdate(selectedAvatar);
+      }
+      
       if (onClose) onClose();
+      
+      console.log('Avatar updated successfully:', selectedAvatar);
     } catch (error) {
       console.error('Error updating avatar:', error);
     } finally {
