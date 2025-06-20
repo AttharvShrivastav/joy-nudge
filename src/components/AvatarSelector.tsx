@@ -5,16 +5,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 
-// Default avatar URLs from our Supabase storage
+// Default avatar URLs from your Supabase storage
 const DEFAULT_AVATARS = [
-  "https://huowfziyvqqnoozdsuaw.supabase.co/storage/v1/object/public/default_avatars/avatar_1.png",
-  "https://huowfziyvqqnoozdsuaw.supabase.co/storage/v1/object/public/default_avatars/avatar_2.png", 
-  "https://huowfziyvqqnoozdsuaw.supabase.co/storage/v1/object/public/default_avatars/avatar_3.png",
-  "https://huowfziyvqqnoozdsuaw.supabase.co/storage/v1/object/public/default_avatars/avatar_4.png",
-  "https://huowfziyvqqnoozdsuaw.supabase.co/storage/v1/object/public/default_avatars/avatar_5.png",
-  "https://huowfziyvqqnoozdsuaw.supabase.co/storage/v1/object/public/default_avatars/avatar_6.png",
-  "https://huowfziyvqqnoozdsuaw.supabase.co/storage/v1/object/public/default_avatars/avatar_7.png",
-  "https://huowfziyvqqnoozdsuaw.supabase.co/storage/v1/object/public/default_avatars/avatar_8.png"
+  "https://hjwjyuwmcrsrptkchnsp.supabase.co/storage/v1/object/sign/v1/1.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNDg4YmE4ZC00NDExLTRhZjUtODRlMC02YjJmNDg4MzY5MTYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2MS8xLnBuZyIsImlhdCI6MTc1MDQzMTg1NiwiZXhwIjo0OTA0MDMxODU2fQ.qw1NxPZkGmhAxk2gfr8zawkAhyhfW6CxI4zCrwNv_kQ",
+  "https://hjwjyuwmcrsrptkchnsp.supabase.co/storage/v1/object/sign/v1/2.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNDg4YmE4ZC00NDExLTRhZjUtODRlMC02YjJmNDg4MzY5MTYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2MS8yLnBuZyIsImlhdCI6MTc1MDQzMTg4NywiZXhwIjo0OTA0MDMxODg3fQ.kO2raiUYB1Zp2oZrjyH5yQnPq4y196QmOugfXj3A1Q0", 
+  "https://hjwjyuwmcrsrptkchnsp.supabase.co/storage/v1/object/sign/v1/3.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNDg4YmE4ZC00NDExLTRhZjUtODRlMC02YjJmNDg4MzY5MTYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2MS8zLnBuZyIsImlhdCI6MTc1MDQzMTkwMCwiZXhwIjo0OTA0MDMxOTAwfQ.3kpawpDRCtbrDZRhVzQSYNxOhWPAtlTIZy6LNuwOE8M",
+  "https://hjwjyuwmcrsrptkchnsp.supabase.co/storage/v1/object/sign/v1/4.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNDg4YmE4ZC00NDExLTRhZjUtODRlMC02YjJmNDg4MzY5MTYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2MS80LnBuZyIsImlhdCI6MTc1MDQzMTkxMiwiZXhwIjo0OTA0MDMxOTEyfQ.T_pk1SckjRxqoKXwMLazAKru2gKRInzXkI17v4uAu8Y",
+  "https://hjwjyuwmcrsrptkchnsp.supabase.co/storage/v1/object/sign/v1/5.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNDg4YmE4ZC00NDExLTRhZjUtODRlMC02YjJmNDg4MzY5MTYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2MS81LnBuZyIsImlhdCI6MTc1MDQzMTkzMSwiZXhwIjo0OTA0MDMxOTMxfQ.WE-e-4NF8dbxbzHWcOsdJYiYE0bQ0Wlpj_6YC2Cvel0",
+  "https://hjwjyuwmcrsrptkchnsp.supabase.co/storage/v1/object/sign/v1/6.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNDg4YmE4ZC00NDExLTRhZjUtODRlMC02YjJmNDg4MzY5MTYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2MS82LnBuZyIsImlhdCI6MTc1MDQzMTk0MywiZXhwIjo0OTA0MDMxOTQzfQ.thXIydgRx2z8kyFMKZ8D-kY7-PcFTH8uUQ6o4fIviTY",
+  "https://hjwjyuwmcrsrptkchnsp.supabase.co/storage/v1/object/sign/v1/7.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNDg4YmE4ZC00NDExLTRhZjUtODRlMC02YjJmNDg4MzY5MTYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2MS83LnBuZyIsImlhdCI6MTc1MDQzMTk1NCwiZXhwIjo0OTA0MDMxOTU0fQ.OiOJwk_xp5_LZXiJdGPrNJaYA-pb7Ouejlp_7EB87z8",
+  "https://hjwjyuwmcrsrptkchnsp.supabase.co/storage/v1/object/sign/v1/8.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNDg4YmE4ZC00NDExLTRhZjUtODRlMC02YjJmNDg4MzY5MTYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2MS84LnBuZyIsImlhdCI6MTc1MDQzMTk2NSwiZXhwIjo0OTA0MDMxOTY1fQ.2tA4R7XNSCFkJIPEg2u9YyP0EjPYopqdXJsrDc_4DQs"
 ];
 
 interface AvatarSelectorProps {
