@@ -38,9 +38,8 @@ export default function StreakDisplay({ streak }: StreakDisplayProps) {
     return { icon: <PlantIcon />, color: "from-joy-coral via-orange-300 to-red-300", message: "Getting started!" };
   };
 
-  // Do not display <1 as streak, never show zero to user if they've started
-  // If streak==0, display 1 for positive UI feedback (unless backend expects 0 for a totally new user)
-  const streakDisplayNumber = streak && streak > 0 ? streak : 1;
+  // Display actual streak value from backend
+  const streakDisplayNumber = streak || 0;
   const streakDisplay = getStreakDisplay();
 
   return (

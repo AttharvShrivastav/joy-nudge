@@ -1,10 +1,24 @@
 
 export const fallbackNudges = [
   {
+    title: "5 Deep Breaths",
+    description: "Take five slow, deep breaths. Focus on the sensation of air flowing in and out.",
+    category: "Mindfulness",
+    interactive_type: "TIMER",
+    duration: 60
+  },
+  {
     title: "Window Reflections",
     description: "Look out your window for 3 minutes. Write about what you see and how it makes you feel right now.",
     category: "Reflection",
     interactive_type: "REFLECTIVE"
+  },
+  {
+    title: "Quick Stretch",
+    description: "Stand up and do a gentle stretch for 1 minute. Roll your shoulders, stretch your arms, or touch your toes.",
+    category: "Movement",
+    interactive_type: "TIMER",
+    duration: 60
   },
   {
     title: "Gratitude Letter",
@@ -13,16 +27,37 @@ export const fallbackNudges = [
     interactive_type: "REFLECTIVE"
   },
   {
+    title: "Notice 3 Things",
+    description: "Look around and notice three things you can see, hear, and feel right now.",
+    category: "Mindfulness",
+    interactive_type: "OBSERVATIONAL",
+    items: ["Something you can see", "Something you can hear", "Something you can feel"]
+  },
+  {
     title: "Morning Intentions",
     description: "Write down three intentions for your day. What do you want to focus on?",
     category: "Reflection",
     interactive_type: "REFLECTIVE"
   },
   {
+    title: "30-Second Dance",
+    description: "Put on a song and dance for 30 seconds. Let your body move however feels good.",
+    category: "Movement",
+    interactive_type: "TIMER",
+    duration: 30
+  },
+  {
     title: "Kindness Memory",
     description: "Recall a recent act of kindness you witnessed or received. Write about how it affected you.",
     category: "Connection",
     interactive_type: "REFLECTIVE"
+  },
+  {
+    title: "Mindful Walk",
+    description: "Take a 2-minute walk, focusing on each step and the sensation of movement.",
+    category: "Movement",
+    interactive_type: "TIMER",
+    duration: 120
   },
   {
     title: "Energy Check-In",

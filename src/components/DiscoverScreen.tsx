@@ -245,7 +245,23 @@ export default function DiscoverScreen() {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => {
                         playSound('button_click');
-                        // Add to queue logic here
+                        // Store nudge in queue for next home screen visit
+                        const existingQueue = JSON.parse(localStorage.getItem('nudgeQueue') || '[]');
+                        const nudgeForQueue = {
+                          id: nudge.id,
+                          nudge: nudge.title,
+                          description: nudge.description,
+                          affirmation: "Wonderful! Thank you for trying this nudge.",
+                          type: nudge.interactive_type?.toLowerCase() || "reflective",
+                          interactive_type: nudge.interactive_type
+                        };
+                        existingQueue.push(nudgeForQueue);
+                        localStorage.setItem('nudgeQueue', JSON.stringify(existingQueue));
+                        
+                        toast({
+                          title: "Nudge added!",
+                          description: "This nudge has been added to your queue.",
+                        });
                       }}
                       className="joy-button-primary text-sm px-4 py-2"
                     >

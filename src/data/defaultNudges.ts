@@ -18,20 +18,44 @@ export const prompts = [
   },
   {
     id: 4,
+    nudge: "Walk for 3 minutes",
+    description: "Take a gentle walk, whether indoors or outdoors. Notice how movement shifts your energy.",
+    affirmation: "Great job! Your body appreciates the movement.",
+    type: "timer",
+    duration: 180
+  },
+  {
+    id: 5,
     nudge: "Write one thing you're grateful for",
     description: "Take a moment to acknowledge something positive in your life, no matter how small.",
     affirmation: "Thank you for sharing your gratitude!",
     type: "reflective"
   },
   {
-    id: 5,
+    id: 6,
+    nudge: "Listen to sounds around you",
+    description: "Close your eyes for 2 minutes and simply listen. What sounds do you notice?",
+    affirmation: "Beautiful awareness! You've practiced mindful listening.",
+    type: "observational",
+    items: ["Close sounds", "Distant sounds", "Natural sounds", "Human-made sounds", "Your breathing"]
+  },
+  {
+    id: 7,
     nudge: "Journal your thoughts",
     description: "Take a few minutes to write down what's on your mind. Let your thoughts flow freely onto the page.",
     affirmation: "Beautiful reflection! Your thoughts matter.",
     type: "reflective"
   },
   {
-    id: 6,
+    id: 8,
+    nudge: "Do 10 jumping jacks",
+    description: "Get your heart pumping with some quick movement. Move at your own pace.",
+    affirmation: "Excellent! You've energized your body.",
+    type: "timer",
+    duration: 30
+  },
+  {
+    id: 9,
     nudge: "What made you smile today?",
     description: "Reflect on a moment that brought joy to your day, however small it might have been.",
     affirmation: "Thank you for sharing that beautiful moment!",
